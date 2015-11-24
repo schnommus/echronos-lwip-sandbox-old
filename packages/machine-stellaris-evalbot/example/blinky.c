@@ -32,7 +32,6 @@
   </schema>
 </module>*/
 
-#include "inc/lm3s9b96.h"
 #include "inc/hw_types.h"
 #include "inc/hw_memmap.h"
 #include "driverlib/rom.h"
@@ -65,14 +64,12 @@ SysTickHandler(void)
     //
     // Every 100 ticks (1 second), toggle the LEDs
     //
-    if((g_ulTickCount % 10) == 0)
+    if((g_ulTickCount % 3) == 0)
     {
         LED_Toggle(BOTH_LEDS);
     }
 }
 
-int main() { return 0; }
-/*
 int
 main(void)
 {
@@ -96,4 +93,3 @@ main(void)
 
     for(;;) { }
 }
-*/

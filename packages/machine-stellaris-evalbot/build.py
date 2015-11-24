@@ -40,6 +40,12 @@ def system_build(system):
     a_flags = common_flags
     c_flags = common_flags + ['-Os', '-ffunction-sections', '-fdata-sections', '-DPART_LM3S9B96', '-std=c99', '-DTARGET_IS_TEMPEST_RB1']
 
+    stellaris = '/home/schnommos/Dev/echronos/packages/machine-stellaris-evalbot/stellarisware-min/'
+
+    execute(['make', stellaris])
+
+    system.linker_script = stellaris + '../example/motor_demo.ld'
+
     # Compile all C files.
     c_obj_files = [os.path.join(system.output, os.path.basename(c.replace('.c', '.o'))) for c in system.c_files]
 
@@ -56,4 +62,6 @@ def system_build(system):
 
     # Perform final link
     obj_files = asm_obj_files + c_obj_files
+    obj_files.append(stellaris + 'driverlib/gcc-cm3/libdriver-cm3.a')
+    obj_files.append(stellaris + 'boards/ek-evalbot/motor_demo/gcc/io.o')
     execute(['arm-none-eabi-ld', '-T', system.linker_script, '-o', system.output_file] + obj_files)
