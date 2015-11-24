@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "prj/app/prj.py", line 585, in run
+    self._py_module.run(system, config)
+  File "packages/machine-stellaris-evalbot/build.py", line 33, in run
+    return system_build(system)
+  File "packages/machine-stellaris-evalbot/build.py", line 62, in system_build
+    obj.files.append(stellaris + 'driverlib/gcc-cm3/libdriver-cm3.a')
+NameError: global name 'obj' is not defined
