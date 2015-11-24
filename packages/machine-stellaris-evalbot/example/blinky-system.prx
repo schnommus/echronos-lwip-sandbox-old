@@ -28,12 +28,11 @@
 
 <system>
   <modules>
-    <module name="armv7m.build" />
+    <module name="machine-stellaris-evalbot.build"/>
     <module name="armv7m.vectable">
       <flash_load_addr>0x8000000</flash_load_addr>
     </module>
-    <module name="machine-stm32f4-discovery.led" />
-    <module name="machine-stm32f4-discovery.example.blinky">
+    <module name="machine-stellaris-evalbot.example.blinky">
       <delay_amount>100000</delay_amount>
     </module>
   </modules>

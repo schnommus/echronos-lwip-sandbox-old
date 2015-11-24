@@ -390,6 +390,7 @@ xml_schema_path) set as a class member.".format(self.__class__.__name__,
             output_path = os.path.join(system.output, f.get('output', f['input']))
 
             logger.info("Preparing: template %s -> %s", input_path, output_path)
+
             try:
                 if f.get('render', False):
                     pystache_render(input_path, output_path, config)
@@ -397,6 +398,7 @@ xml_schema_path) set as a class member.".format(self.__class__.__name__,
                     shutil.copyfile(input_path, output_path)
             except FileNotFoundError as e:
                 raise SystemBuildError("File not found error during template preparation '{}'.".format(e.filename))
+
 
             _type = f.get('type')
             if _type is None:
@@ -637,7 +639,8 @@ class System:
 
     @property
     def include_paths(self):
-        return [self.output]
+        global_includes = ["/home/schnommos/Dev/echronos/packages/machine-stellaris-evalbot/stellarisware-min", "/home/schnommos/Dev/echronos/packages/machine-stellaris-evalbot/stellarisware-min/boards/ek-evalbot" ]
+        return [self.output] + global_includes
 
     @property
     def c_files(self):

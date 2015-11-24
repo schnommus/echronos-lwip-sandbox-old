@@ -31,7 +31,16 @@
    <entry name="delay_amount" type="int" default="10000"/>
   </schema>
 </module>*/
-#include "led.h"
+
+#include "inc/lm3s9b96.h"
+#include "inc/hw_types.h"
+#include "inc/hw_memmap.h"
+#include "driverlib/rom.h"
+#include "driverlib/gpio.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/systick.h"
+#include "drivers/io.h"
+
 #define DELAY_AMOUNT {{delay_amount}}
 
 static inline void
@@ -43,41 +52,48 @@ delay(void)
     }
 }
 
+unsigned long g_ulTickCount = 0;
+
+void
+SysTickHandler(void)
+{
+    //
+    // Increment the tick counter.
+    //
+    g_ulTickCount++;
+
+    //
+    // Every 100 ticks (1 second), toggle the LEDs
+    //
+    if((g_ulTickCount % 10) == 0)
+    {
+        LED_Toggle(BOTH_LEDS);
+    }
+}
+
+int main() { return 0; }
+/*
 int
 main(void)
 {
-    unsigned int i;
-    led_init();
+    //
+    // Set the clocking to directly from the crystal
+    //
+    ROM_SysCtlClockSet(SYSCTL_SYSDIV_1 | SYSCTL_USE_OSC | SYSCTL_OSC_MAIN |
+                       SYSCTL_XTAL_16MHZ);
 
-    for (i = 0; ; i++)
-    {
-        switch (i % 8)
-        {
-        case 0:
-            led_green_on();
-            break;
-        case 1:
-            led_blue_on();
-            break;
-        case 2:
-            led_red_on();
-            break;
-        case 3:
-            led_orange_on();
-            break;
-        case 4:
-            led_green_off();
-            break;
-        case 5:
-            led_blue_off();
-            break;
-        case 6:
-            led_red_off();
-            break;
-        case 7:
-            led_orange_off();
-            break;
-        }
-        delay();
-    }
+    // Initialize the LED driver, then turn one LED on
+    //
+    LEDsInit();
+    LED_On(LED_1);
+
+    // Set up and enable the SysTick timer to use as a time reference.
+    // It will be set up for a 10 ms tick.
+    //
+    ROM_SysTickPeriodSet(ROM_SysCtlClockGet() / 100);
+    ROM_SysTickEnable();
+    ROM_SysTickIntEnable();
+
+    for(;;) { }
 }
+*/

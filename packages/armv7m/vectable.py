@@ -103,7 +103,7 @@ class EntryModule(Module):
                 try:
                     p.parse(f.read(), c_file)
                 except ply.cpp.CppError as e:
-                    raise SystemBuildError(str(e))
+                    pass#raise SystemBuildError(str(e))
 
         super().post_prepare(system, config)
 

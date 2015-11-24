@@ -34,6 +34,7 @@ def run(system, configuration=None):
 
 
 def system_build(system):
+    print("IN ARMV7m BUILD SCRIPT")
     inc_path_args = ['-I%s' % i for i in system.include_paths]
     common_flags = ['-mthumb', '-march=armv7-m', '-g3']
     a_flags = common_flags

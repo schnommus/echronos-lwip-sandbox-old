@@ -34,17 +34,18 @@ def run(system, configuration=None):
 
 
 def system_build(system):
+    print("USING STELLARIS BUILD FUNCTION")
     inc_path_args = ['-I%s' % i for i in system.include_paths]
-    common_flags = ['-mthumb', '-g3', '-mlittle-endian', '-mcpu=cortex-m4', '-mfloat-abi=hard', '-mfpu=fpv4-sp-d16']
+    common_flags = ['-mthumb', '-mcpu=cortex-m3', '-MD']
     a_flags = common_flags
-    c_flags = common_flags + ['-Os']
+    c_flags = common_flags + ['-Os', '-ffunction-sections', '-fdata-sections', '-DPART_LM3S9B96', '-std=c99', '-DTARGET_IS_TEMPEST_RB1']
 
     # Compile all C files.
     c_obj_files = [os.path.join(system.output, os.path.basename(c.replace('.c', '.o'))) for c in system.c_files]
 
     for c, o in zip(system.c_files, c_obj_files):
         os.makedirs(os.path.dirname(o), exist_ok=True)
-        execute(['arm-none-eabi-gcc', '-ffreestanding', '-c', c, '-o', o, '-Wall', '-Werror'] +
+        execute(['arm-none-eabi-gcc', '-ffreestanding', '-c', c, '-o', o, '-Wall'] +
                 c_flags + inc_path_args)
 
     # Assemble all asm files.
