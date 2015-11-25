@@ -38,7 +38,7 @@ def system_build(system):
     inc_path_args = ['-I%s' % i for i in system.include_paths]
     common_flags = ['-mthumb', '-mcpu=cortex-m3', '-MD']
     a_flags = common_flags
-    c_flags = common_flags + ['-Os', '-ffunction-sections', '-fdata-sections', '-DPART_LM3S9B96', '-std=c99', '-DTARGET_IS_TEMPEST_RB1']
+    c_flags = common_flags + ['-ffunction-sections', '-fdata-sections', '-DPART_LM3S9B96', '-std=c99', '-DTARGET_IS_TEMPEST_RB1', '-g']
 
     stellaris = '/home/schnommos/Dev/echronos/packages/machine-stellaris-evalbot/stellarisware-min/'
 

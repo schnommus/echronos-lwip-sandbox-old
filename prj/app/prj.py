@@ -740,6 +740,7 @@ class System:
                     rtos_config_data = config_data
                     rtos_module_name = name
                 else:
+                    print( "APPENDED NON-RTOS MODULE: " + str(name) + ' ' + str(module) + ' ' + str(config_data) + ' ' + str(m_el) )
                     non_rtos_modules.append((name, module, config_data, m_el))
             else:
                 raise EntityLoadError(xml_error_str(m_el, 'Entity {} has unexpected type {} and cannot be \
@@ -747,6 +748,7 @@ class System:
 
         # Commit each non-RTOS module's config, with that of the RTOS module present as a dict under the key 'rtos'
         for (name, module, config_data, m_el) in non_rtos_modules:
+            print( "config data is: " + str(config_data) )
             if not config_data:
                 config_data = {}
             elif 'rtos' in config_data.keys():

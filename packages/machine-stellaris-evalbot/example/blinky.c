@@ -39,6 +39,8 @@
 #include "driverlib/sysctl.h"
 #include "driverlib/systick.h"
 #include "drivers/io.h"
+#include <stdint.h>
+#include "debug.h"
 
 #define DELAY_AMOUNT {{delay_amount}}
 
@@ -67,6 +69,7 @@ SysTickHandler(void)
     if((g_ulTickCount % 3) == 0)
     {
         LED_Toggle(BOTH_LEDS);
+        debug_println("LED BLINKING\n");
     }
 }
 

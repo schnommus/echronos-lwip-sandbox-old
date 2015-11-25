@@ -33,5 +33,7 @@
     <module name="machine-stellaris-evalbot.example.blinky">
       <delay_amount>100000</delay_amount>
     </module>
+    <module name="armv7m.semihost-debug"/>
+    <module name="generic.debug"/>
   </modules>
 </system>
