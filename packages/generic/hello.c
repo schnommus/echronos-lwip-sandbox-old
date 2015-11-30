@@ -38,8 +38,8 @@
 int
 main(void)
 {
-
     debug_println("{{phrase}}");
+
     for (;;)
     {
     }
