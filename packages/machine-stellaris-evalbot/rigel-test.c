@@ -161,6 +161,7 @@ fn_b(void)
     }
 }
 
+__attribute__((used))
 int
 main(void)
 {

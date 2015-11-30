@@ -30,7 +30,7 @@
   <modules>
     <module name="machine-stellaris-evalbot.build" />
     <module name="armv7m.ctxt-switch" />
-    <module name="machine-stellaris-evalbot.example.startup_gcc"/>
+    <module name="armv7m.vectable"/>
     <module name="armv7m.semihost-debug" />
     <module name="generic.debug" />
 

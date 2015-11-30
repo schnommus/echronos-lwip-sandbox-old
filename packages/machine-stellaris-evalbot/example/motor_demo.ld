@@ -21,37 +21,83 @@
  * This is part of revision 10636 of the Stellaris Firmware Development Package.
  *
  *****************************************************************************/
-
-MEMORY
-{
-    FLASH (rx) : ORIGIN = 0x00000000, LENGTH = 0x00040000
-    SRAM (rwx) : ORIGIN = 0x20000000, LENGTH = 0x00018000
-}
-
+OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm", "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(vector_table)
 SECTIONS
 {
-    .text :
-    {
-        _text = .;
-        KEEP(*(.isr_vector))
-        *(.text*)
-        *(.rodata*)
-        _etext = .;
-    } > FLASH
+        . = 0;
+        ro_start = .;
+        .vectors : AT (0)
+        { *(.vectors) }
 
-    .data : AT(ADDR(.text) + SIZEOF(.text))
-    {
-        _data = .;
-        *(vtable)
-        *(.data*)
-        _edata = .;
-    } > SRAM
+        .text : AT (LOADADDR(.vectors) + SIZEOF(.vectors))
+        { *(.text.startup) *(.text) }
 
-    .bss :
-    {
-        _bss = .;
-        *(.bss*)
-        *(COMMON)
-        _ebss = .;
-    } > SRAM
+        .rodata : AT (LOADADDR (.text) + SIZEOF(.text))
+        { *(.rodata*) }
+
+        ro_end = ALIGN(4);
+
+        . = 536870912;
+        .data.bitband : AT (0 + (ro_end - ro_start))
+        {
+              *(.data.bitband)
+        }
+
+        /* Check that bitband variables don't overflow */
+        dummy = ASSERT(. <= 536870912 + 1048576, "bitband variables too large");
+
+        .data : AT (LOADADDR(.data.bitband) + SIZEOF(.data.bitband))
+        {
+              *(.data)
+              . = ALIGN(4);
+        }
+
+        data_load_addr = LOADADDR(.data.bitband);
+        data_virt_addr = ADDR(.data.bitband);
+        data_size = . - ADDR(.data.bitband);
+
+        /* Check addresses are correct */
+        dummy = ASSERT(data_load_addr % 4 == 0, "data_load_addr not word aligned");
+        dummy = ASSERT(data_virt_addr % 4 == 0, "data_virt_addr not word aligned");
+        dummy = ASSERT(data_size % 4 == 0, "data_size not word aligned");
+
+        .bss :
+        {
+             *(.bss)
+             *(COMMON)
+             . = ALIGN(4);
+        }
+
+        bss_virt_addr = ADDR(.bss);
+        bss_size = SIZEOF(.bss);
+
+        .stack : {
+               . = . + 4096;
+               stack = .;
+        }
+
+        /* Aliases for all the bitband variables */
+        rtos_internal_interrupt_event_bitband = 570425344 + ((rtos_internal_interrupt_event - 536870912) * 32);
+
+        /* Debug sections */
+
+        .debug_aranges  0 : { *(.debug_aranges) }
+        .debug_pubnames 0 : { *(.debug_pubnames) }
+
+        .debug_info     0 : { *(.debug_info .gnu.linkonce.wi.*) }
+        .debug_abbrev   0 : { *(.debug_abbrev) }
+        .debug_line     0 : { *(.debug_line) }
+        .debug_frame    0 : { *(.debug_frame) }
+        .debug_str      0 : { *(.debug_str) }
+        .debug_loc      0 : { *(.debug_loc) }
+        .debug_macinfo  0 : { *(.debug_macinfo) }
+
+        .debug_pubtypes 0 : { *(.debug_pubtypes) }
+        .debug_ranges   0 : { *(.debug_ranges) }
+
+        .debug_macro    0 : { *(.debug_macro) }
+
+        /DISCARD/ : { *(*) }
 }
