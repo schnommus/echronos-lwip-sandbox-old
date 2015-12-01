@@ -29,13 +29,50 @@
 <system>
   <modules>
     <module name="machine-tm4c1294-launchpad.build" />
+
+
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.adc"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.aes"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.can"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.comp"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.cpu"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.crc"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.des"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.eeprom"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.emac"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.epi"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.flash"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.fpu"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.gpio"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.i2c"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.interrupt"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.lcd"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.mpu"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.onewire"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.pwm"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.qei"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.shamd5"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.ssi"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.sw_crc"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.sysctl"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.sysexc"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.systick"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.timer"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.uart"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.udma"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.usb"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.watchdog"/>
+
+    <module name="machine-tm4c1294-launchpad.ti_libs.utils.uartstdio"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.examples.boards.ek-tm4c1294xl.drivers.pinout"/>
+
+
+
     <module name="armv7m.ctxt-switch" />
     <module name="armv7m.vectable">
       <systick>tick_irq</systick>
       <flash_load_addr>0x0000000</flash_load_addr>
     </module>
-    <module name="armv7m.semihost-debug" />
-    <module name="generic.debug" />
 
     <module name="armv7m.rtos-rigel">
       <prefix>rtos</prefix>
@@ -129,7 +166,7 @@
       </message_queues>
     </module>
 
-    <module name="rtos-example.rigel-test" />
+    <module name="machine-tm4c1294-launchpad.src.rigel-serial"/>
 
   </modules>
 </system>
