@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "prj/app/prj.py", line 583, in run
+    self._py_module.run(system, config)
+  File "packages/machine-tm4c1294-launchpad/build.py", line 33, in run
+    return system_build(system)
+  File "packages/machine-tm4c1294-launchpad/build.py", line 41, in system_build
+    system.include_paths += [ti_lib_dir]
+AttributeError: can't set attribute

@@ -1,9 +1,3 @@
-/*<module>
-      <headers>
-          <header path="tm4c1294ncpdt.h" />
-      </headers>
-  </module>*/
-
 #include <stdint.h>
 #include <stddef.h>
 #include "tm4c1294ncpdt.h"

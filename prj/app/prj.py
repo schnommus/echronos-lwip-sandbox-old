@@ -608,6 +608,7 @@ class System:
         self.name = name
         self.dom = dom
         self.project = project
+        self.extra_includes = []
         self._c_files = []
         self._asm_files = []
         self._linker_script = None
@@ -637,7 +638,10 @@ class System:
 
     @property
     def include_paths(self):
-        return [self.output]
+        return [self.output] + self.extra_includes
+
+    def add_include_path(self, path):
+        self.extra_includes.append(path)
 
     @property
     def c_files(self):

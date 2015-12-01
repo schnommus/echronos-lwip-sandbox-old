@@ -28,7 +28,7 @@
 
 <system>
   <modules>
-    <module name="armv7m.build" />
+    <module name="machine-tm4c1294-launchpad.build" />
     <module name="armv7m.ctxt-switch" />
     <module name="armv7m.vectable">
       <systick>tick_irq</systick>
