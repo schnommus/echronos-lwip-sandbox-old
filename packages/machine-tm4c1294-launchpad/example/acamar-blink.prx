@@ -54,6 +54,6 @@
 
       </tasks>
     </module>
-    <module name="machine-tm4c1294-launchpad.acamar-blink"/>
+    <module name="machine-tm4c1294-launchpad.src.acamar-blink"/>
   </modules>
 </system>

@@ -23,6 +23,7 @@
 //*****************************************************************************
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include "inc/hw_types.h"
 #include "utils/ustdlib.h"
 #include "cgifuncs.h"
@@ -59,7 +60,7 @@ FindCGIParameter(const char *pcToFind, char *pcParam[], int32_t iNumParams)
         //
         // Does the parameter name match the provided string?
         //
-        if(ustrcmp(pcToFind, pcParam[iLoop]) == 0)
+        if(strcmp(pcToFind, pcParam[iLoop]) == 0)
         {
             //
             // We found a match - return the index.

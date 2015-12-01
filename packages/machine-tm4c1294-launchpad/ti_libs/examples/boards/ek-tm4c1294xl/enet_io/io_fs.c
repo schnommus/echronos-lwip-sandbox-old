@@ -23,6 +23,7 @@
 //*****************************************************************************
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 #include "inc/hw_types.h"
 #include "inc/hw_memmap.h"
 #include "driverlib/rom.h"
@@ -90,7 +91,7 @@ fs_open(const char *pcName)
         io_get_ledstate(pcBuf, 4);
 
         psFile->data = pcBuf;
-        psFile->len = ustrlen(pcBuf);
+        psFile->len = strlen(pcBuf);
         psFile->index = psFile->len;
         psFile->pextension = NULL;
 
@@ -113,7 +114,7 @@ fs_open(const char *pcName)
         io_get_ledstate(pcBuf, 4);
 
         psFile->data = pcBuf;
-        psFile->len = ustrlen(pcBuf);
+        psFile->len = strlen(pcBuf);
         psFile->index = psFile->len;
         psFile->pextension = NULL;
         return(psFile);
@@ -131,7 +132,7 @@ fs_open(const char *pcName)
         io_get_animation_speed_string(pcBuf, 6);
 
         psFile->data = pcBuf;
-        psFile->len = ustrlen(pcBuf);
+        psFile->len = strlen(pcBuf);
         psFile->index = psFile->len;
         psFile->pextension = NULL;
         return(psFile);
@@ -154,7 +155,7 @@ fs_open(const char *pcName)
         io_get_animation_speed_string(pcBuf, 6);
 
         psFile->data = pcBuf;
-        psFile->len = ustrlen(pcBuf);
+        psFile->len = strlen(pcBuf);
         psFile->index = psFile->len;
         psFile->pextension = NULL;
         return(psFile);

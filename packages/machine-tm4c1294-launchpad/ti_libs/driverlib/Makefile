@@ -86,6 +86,7 @@ ${COMPILER}/libdriver.a: ${COMPILER}/epi.o
 ${COMPILER}/libdriver.a: ${COMPILER}/flash.o
 ${COMPILER}/libdriver.a: ${COMPILER}/fpu.o
 ${COMPILER}/libdriver.a: ${COMPILER}/gpio.o
+${COMPILER}/libdriver.a: ${COMPILER}/hibernate.o
 ${COMPILER}/libdriver.a: ${COMPILER}/i2c.o
 ${COMPILER}/libdriver.a: ${COMPILER}/interrupt.o
 ${COMPILER}/libdriver.a: ${COMPILER}/lcd.o
