@@ -31,7 +31,7 @@
 //
 //*****************************************************************************
 #include <stdarg.h>
-#include <time.h>
+#include <stddef.h>
 
 //*****************************************************************************
 //
@@ -49,8 +49,6 @@ extern "C"
 // Prototypes for the APIs.
 //
 //*****************************************************************************
-extern void ulocaltime(time_t timer, struct tm *tm);
-extern time_t umktime(struct tm *timeptr);
 extern int urand(void);
 extern int usnprintf(char * restrict s, size_t n, const char * restrict format,
                      ...);

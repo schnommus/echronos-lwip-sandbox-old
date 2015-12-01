@@ -84,14 +84,31 @@
 #include "lwip/tcp.h"
 #include "fs.h"
 
-#include <string.h>
-#include <stdlib.h>
+#include "utils/ustdlib.h"
 
 #if LWIP_TCP
 
 #ifndef HTTPD_DEBUG
 #define HTTPD_DEBUG         LWIP_DBG_OFF
 #endif
+
+const char *ustrchr(const char *s, int c) {
+    if (s == NULL) {
+        return NULL;
+    }
+    if ((c > 255) || (c < 0)) {
+        return NULL;
+    }
+    int s_len;
+    int i;
+    s_len = strlen(s);
+    for (i = 0; i < s_len; i++) {
+        if ((char) c == s[i]) {
+            return (const char*) &s[i];
+        }
+    }
+    return NULL;
+}
 
 /** Set this to 1 and add the next line to lwippools.h to use a memp pool
  * for allocating struct http_state instead of the heap:
@@ -564,14 +581,14 @@ extract_uri_parameters(struct http_state *hs, char *params)
 
     /* Find the start of the next name=value pair and replace the delimiter
      * with a 0 to terminate the previous pair string. */
-    pair = strchr(pair, '&');
+    pair = ustrchr(pair, '&');
     if(pair) {
       *pair = '\0';
       pair++;
     } else {
        /* We didn't find a new parameter so find the end of the URI and
         * replace the space with a '\0' */
-        pair = strchr(equals, ' ');
+        pair = ustrchr(equals, ' ');
         if(pair) {
             *pair = '\0';
         }
@@ -582,7 +599,7 @@ extract_uri_parameters(struct http_state *hs, char *params)
 
     /* Now find the '=' in the previous pair, replace it with '\0' and save
      * the parameter value string. */
-    equals = strchr(equals, '=');
+    equals = ustrchr(equals, '=');
     if(equals) {
       *equals = '\0';
       hs->param_vals[loop] = equals + 1;
@@ -690,11 +707,11 @@ get_http_headers(struct http_state *pState, char *pszURI)
        special case.  We assume that any filename with "404" in it must be
        indicative of a 404 server error whereas all other files require
        the 200 OK header. */
-    if (strstr(pszURI, "404")) {
+    if (ustrstr(pszURI, "404")) {
       pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_FOUND];
-    } else if (strstr(pszURI, "400")) {
+    } else if (ustrstr(pszURI, "400")) {
       pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_BAD_REQUEST];
-    } else if (strstr(pszURI, "501")) {
+    } else if (ustrstr(pszURI, "501")) {
       pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_NOT_IMPL];
     } else {
       pState->hdrs[0] = g_psHTTPHeaderStrings[HTTP_HDR_OK];
@@ -702,7 +719,7 @@ get_http_headers(struct http_state *pState, char *pszURI)
 
     /* Determine if the URI has any variables and, if so, temporarily remove
        them. */
-    pszVars = strchr(pszURI, '?');
+    pszVars = ustrchr(pszURI, '?');
     if(pszVars) {
       *pszVars = '\0';
     }
@@ -710,10 +727,10 @@ get_http_headers(struct http_state *pState, char *pszURI)
     /* Get a pointer to the file extension.  We find this by looking for the
        last occurrence of "." in the filename passed. */
     pszExt = NULL;
-    pszWork = strchr(pszURI, '.');
+    pszWork = ustrchr(pszURI, '.');
     while(pszWork) {
       pszExt = pszWork + 1;
-      pszWork = strchr(pszExt, '.');
+      pszWork = ustrchr(pszExt, '.');
     }
 
     /* Now determine the content type and add the relevant header for that. */
@@ -1772,7 +1789,7 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
   } else {
     /* No - we've been asked for a specific file. */
     /* First, isolate the base URI (without any parameters) */
-    params = (char *)strchr(uri, '?');
+    params = (char *)ustrchr(uri, '?');
     if (params != NULL) {
       /* URI contains parameters. NULL-terminate the base URI */
       *params = '\0';
@@ -1811,7 +1828,7 @@ http_find_file(struct http_state *hs, const char *uri, int is_09)
        */
       hs->tag_check = false;
       for (loop = 0; loop < NUM_SHTML_EXTENSIONS; loop++) {
-        if (strstr(uri, g_pcSSIExtensions[loop])) {
+        if (ustrstr(uri, g_pcSSIExtensions[loop])) {
           hs->tag_check = true;
           break;
         }
