@@ -41,11 +41,19 @@ def system_build(system):
     system.add_include_path(ti_lib_dir)
     system.add_include_path(ti_lib_dir + "inc/")
     system.add_include_path(ti_lib_dir + "examples/boards/ek-tm4c1294xl/")
+    system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/src/include")
+    system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/apps")
+    system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/ports/tiva-tm4c129/include")
+    system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/src/include/ipv4")
+    system.add_include_path(ti_lib_dir + "third_party")
+    system.add_include_path(ti_lib_dir + "../example")
+
+    cpu_fpu = [ '-mfpu=fpv4-sp-d16', '-mfloat-abi=softfp']
 
     inc_path_args = ['-I%s' % i for i in system.include_paths]
-    common_flags = ['-mthumb', '-march=armv7-m', '-g3']
+    common_flags = ['-mthumb', '-march=armv7-m', '-g3'] + cpu_fpu
     a_flags = common_flags
-    c_flags = common_flags + ['-Os', '-DTARGET_IS_TM4C129_RA0', '-DPART_TM4C1294NCPDT', '-Dgcc' ]
+    c_flags = common_flags + ['-Os', '-DTARGET_IS_TM4C129_RA0', '-DPART_TM4C1294NCPDT', '-Dgcc', '-std=gnu99', '-g' ]
 
 
     # Compile all C files.
@@ -53,7 +61,7 @@ def system_build(system):
 
     for c, o in zip(system.c_files, c_obj_files):
         os.makedirs(os.path.dirname(o), exist_ok=True)
-        execute(['arm-none-eabi-gcc', '-ffreestanding', '-c', c, '-o', o, '-Wall', '-Werror'] +
+        execute(['arm-none-eabi-gcc', '-ffreestanding', '-c', c, '-o', o, '-Wall'] +
                 c_flags + inc_path_args)
 
     # Assemble all asm files.
@@ -70,4 +78,4 @@ def system_build(system):
 
     # Perform final link
     obj_files = asm_obj_files + c_obj_files
-    execute(['arm-none-eabi-ld', '-T', system.linker_script, '-o', system.output_file] + obj_files)
+    execute(['arm-none-eabi-ld', '-T', system.linker_script, '-o', system.output_file ] + obj_files)

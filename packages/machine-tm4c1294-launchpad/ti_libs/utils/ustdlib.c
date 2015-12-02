@@ -1854,7 +1854,7 @@ char *ustrcat ( char *dest, const char *src ) {
     char *ret = dest;
     while (*dest)
         dest++;
-    while (*dest++ = *src++)
+    while ( (*dest++ = *src++) )
         ;
     return ret;
 }

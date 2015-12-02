@@ -86,7 +86,8 @@ ConfigureUART(void)
 void
 tick_irq(void)
 {
-    UARTprintf("irq tick\n");
+    //Don't use UART inside an interrupt! Results in fatal.
+    //UARTprintf("irq tick\n");
     rtos_timer_tick();
 }
 
