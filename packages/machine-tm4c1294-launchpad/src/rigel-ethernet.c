@@ -129,6 +129,8 @@ void tick_irq(void) {
     //Don't use UART inside an interrupt! Results in fatal.
     //UARTprintf("irq tick\n");
     rtos_timer_tick();
+
+    lwIPTimer( SYSTICKMS );
 }
 
 void fatal(RtosErrorId error_id) {
@@ -139,9 +141,9 @@ void fatal(RtosErrorId error_id) {
 
 void fn_a(void) {
     for(;;) {
-        rtos_signal_wait(RTOS_SIGNAL_ID_TIMER);
-        UARTprintf("task a: Ticking lwIP...\n");
-        lwIPTimer( SYSTICKMS );
+        rtos_task_start( RTOS_TASK_ID_B );
+        UARTprintf("task a: sleeping for 15 ticks\n");
+        rtos_sleep(15);
     }
 }
 

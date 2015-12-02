@@ -23,3 +23,6 @@ prj_build*
 
 # GDB file.
 .gdbinit*
+
+# vim swapfiles
+*.swp
