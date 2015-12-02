@@ -23,6 +23,7 @@
 //*****************************************************************************
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 #include <string.h>
 #include "inc/hw_types.h"
 #include "utils/ustdlib.h"

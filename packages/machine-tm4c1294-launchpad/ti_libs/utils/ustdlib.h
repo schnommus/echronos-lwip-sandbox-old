@@ -31,6 +31,7 @@
 //
 //*****************************************************************************
 #include <stdarg.h>
+#include <stddef.h>
 #include <time.h>
 
 //*****************************************************************************
@@ -70,6 +71,12 @@ extern unsigned long int ustrtoul(const char * restrict nptr,
 extern int uvsnprintf(char * restrict s, size_t n,
                       const char * restrict format, va_list arg);
 
+// New functions
+extern void *umemset ( void * ptr, int value, size_t num ); 
+extern void *umemcpy ( void * destination, const void * source, size_t num );
+extern int umemcmp ( const void * s1, const void * s2,size_t n );
+extern char *ustrchr ( const char *s, int c );
+extern char *ustrcat ( char *dest, const char *src );
 //*****************************************************************************
 //
 // Mark the end of the C bindings section for C++ compilers.

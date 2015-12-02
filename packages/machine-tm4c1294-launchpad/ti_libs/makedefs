@@ -66,7 +66,7 @@ ifeq (${COMPILER}, gcc)
 # Get the prefix for the tools to use.  Use arm-stellaris-eabi if it exists,
 # otherwise fall back to arm-none-eabi.
 #
-PREFIX:=/home/schnommos/x-tools/arm-unknown-eabi/bin/arm-unknown-eabi
+PREFIX:=arm-none-eabi
 
 #
 # The command for calling the compiler.
@@ -123,7 +123,7 @@ LD=${PREFIX}-ld
 #
 # The flags passed to the linker.
 #
-LDFLAGS=--gc-sections -fno-lto -shared
+LDFLAGS=--gc-sections
 
 #
 # Get the location of libgcc.a from the GCC front-end.
@@ -233,13 +233,13 @@ ${COMPILER}${SUFFIX}/%.axf:
 	          --entry ${ENTRY_${notdir ${@:.axf=}}}                       \
 	          ${LDFLAGSgcc_${notdir ${@:.axf=}}}                          \
 	          ${LDFLAGS} -o ${@} $(filter %.o %.a, ${^})                  \
-	          '${LIBM}' '${LIBC}' '${LIBGCC}';                            \
+	          '${LIBGCC}';                            \
 	 fi;                                                                  \
 	${LD} -T $${ldname}                                                   \
 	      --entry ${ENTRY_${notdir ${@:.axf=}}}                           \
 	      ${LDFLAGSgcc_${notdir ${@:.axf=}}}                              \
 	      ${LDFLAGS} -o ${@} $(filter %.o %.a, ${^})                      \
-	      '${LIBM}' '${LIBC}' '${LIBGCC}'
+	      '${LIBGCC}'
 	@${OBJCOPY} -O binary ${@} ${@:.axf=.bin}
 endif
 

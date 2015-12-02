@@ -1818,6 +1818,47 @@ urand(void)
     return((int)g_iRandomSeed);
 }
 
+void *umemset ( void * s, int c, size_t n ) {
+    unsigned char* p=s;
+    while(n--)
+        *p++ = (unsigned char)c;
+    return s;
+}
+
+void *umemcpy ( void * dest, const void * src, size_t n ) {
+    char *dp = dest;
+    const char *sp = src;
+    while (n--)
+        *dp++ = *sp++;
+    return dest;
+}
+
+char *ustrchr ( const char *s, int c ) {
+    while (*s != (char)c)
+        if (!*s++)
+            return 0;
+    return (char *)s;
+}
+
+int umemcmp (const void * s1, const void * s2,size_t n) {
+    const unsigned char *p1 = s1, *p2 = s2;
+    while(n--)
+        if( *p1 != *p2 )
+            return *p1 - *p2;
+        else
+            p1++,p2++;
+    return 0;
+}
+
+char *ustrcat ( char *dest, const char *src ) {
+    char *ret = dest;
+    while (*dest)
+        dest++;
+    while (*dest++ = *src++)
+        ;
+    return ret;
+}
+
 //*****************************************************************************
 //
 // Close the Doxygen group.
