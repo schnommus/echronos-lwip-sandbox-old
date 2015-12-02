@@ -30,13 +30,11 @@ DIRS=bitband           \
      enet_io           \
      enet_lwip         \
      enet_uip          \
-     enet_weather      \
      gpio_jtag         \
      hello             \
      hibernate         \
      interrupts        \
      mpu_fault         \
-     qs_iot            \
      sleep_modes       \
      timers            \
      uart_echo         \
@@ -46,9 +44,6 @@ DIRS=bitband           \
      usb_dev_keyboard  \
      usb_host_keyboard \
      usb_host_mouse    \
-     usb_host_msc      \
-     usb_stick_demo    \
-     usb_stick_update  \
      watchdog         
 
 #
