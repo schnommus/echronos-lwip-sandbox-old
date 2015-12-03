@@ -39,14 +39,15 @@ def system_build(system):
     ti_lib_dir = os.getcwd() + "/packages/machine-tm4c1294-launchpad/ti_libs/"
     
     system.add_include_path(ti_lib_dir)
-    system.add_include_path(ti_lib_dir + "inc/")
-    system.add_include_path(ti_lib_dir + "examples/boards/ek-tm4c1294xl/")
+    system.add_include_path(ti_lib_dir + "inc")
+    system.add_include_path(ti_lib_dir + "stdlib_hook")
+    system.add_include_path(ti_lib_dir + "examples/boards/ek-tm4c1294xl")
     system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/src/include")
     system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/apps")
     system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/ports/tiva-tm4c129/include")
     system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/src/include/ipv4")
     system.add_include_path(ti_lib_dir + "third_party")
-    system.add_include_path(ti_lib_dir + "../example")
+    system.add_include_path(ti_lib_dir + "../src")
 
     cpu_fpu = [ '-mfpu=fpv4-sp-d16', '-mfloat-abi=softfp']
 

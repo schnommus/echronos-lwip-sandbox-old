@@ -147,6 +147,8 @@ void fn_a(void) {
     }
 }
 
+
+
 void fn_b(void) {
     for (;;) {
         UARTprintf("task b: sleeping for 10 ticks\n");
@@ -179,6 +181,9 @@ int main(void) {
     MAP_SysTickPeriodSet(g_ui32SysClock / SYSTICKHZ);
     MAP_SysTickEnable();
     MAP_SysTickIntEnable();
+
+    // Configure ethernet interrupt handler
+    //IntRegister( , lwIPEthernetIntHandler );
     
     MAP_FlashUserGet(&ui32User0, &ui32User1);
     if((ui32User0 == 0xffffffff) || (ui32User1 == 0xffffffff)) {
