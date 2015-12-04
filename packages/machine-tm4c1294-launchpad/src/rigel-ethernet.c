@@ -53,6 +53,13 @@
 #define SYSTICK_INT_PRIORITY    0x80
 #define ETHERNET_INT_PRIORITY   0xC0
 
+
+#ifdef DEBUG
+void __error__( char *pcFilename, uint32_t ui32Line ) {
+    for(;;);
+}
+#endif
+
 uint32_t g_ui32IPAddress;
 
 uint32_t g_ui32SysClock;
@@ -182,8 +189,10 @@ int main(void) {
     MAP_SysTickEnable();
     MAP_SysTickIntEnable();
 
-    // Configure ethernet interrupt handler
-    //IntRegister( , lwIPEthernetIntHandler );
+    //IntRegister( INT_EMAC0_TM4C129, fn_a );
+
+    //ROM_IntMasterEnable();
+    //ROM_IntEnable(INT_EMAC0_TM4C129);
     
     MAP_FlashUserGet(&ui32User0, &ui32User1);
     if((ui32User0 == 0xffffffff) || (ui32User1 == 0xffffffff)) {

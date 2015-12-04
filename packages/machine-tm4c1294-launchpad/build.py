@@ -54,7 +54,7 @@ def system_build(system):
     inc_path_args = ['-I%s' % i for i in system.include_paths]
     common_flags = ['-mthumb', '-march=armv7-m', '-g3'] + cpu_fpu
     a_flags = common_flags
-    c_flags = common_flags + ['-Os', '-DTARGET_IS_TM4C129_RA0', '-DPART_TM4C1294NCPDT', '-Dgcc', '-std=gnu99', '-g' ]
+    c_flags = common_flags + ['-Os', '-DTARGET_IS_TM4C129_RA0', '-DPART_TM4C1294NCPDT', '-Dgcc', '-std=gnu99', '-g', '-DDEBUG' ]
 
 
     # Compile all C files.

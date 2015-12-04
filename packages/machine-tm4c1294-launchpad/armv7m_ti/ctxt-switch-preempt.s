@@ -72,7 +72,7 @@
 /* Setting BASEPRI to the same priority value as that of a configurable-priority interrupt disables the interrupt. */
 .macro asm_preempt_disable scratch
         /* This hardcoded value must match the PendSV priority set by the ARM-specific preempt_init. */
-        ldr \scratch, =#240
+        ldr \scratch, =#224
         msr basepri, \scratch
 .endm
 

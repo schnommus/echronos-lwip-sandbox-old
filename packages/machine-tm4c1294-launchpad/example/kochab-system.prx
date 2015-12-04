@@ -30,7 +30,6 @@
   <modules>
     <module name="machine-tm4c1294-launchpad.build" />
 
-
     <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.adc"/>
     <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.aes"/>
     <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.can"/>
@@ -65,54 +64,84 @@
 
     <module name="machine-tm4c1294-launchpad.ti_libs.utils.uartstdio"/>
     <module name="machine-tm4c1294-launchpad.ti_libs.utils.ustdlib"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.utils.lwiplib"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.utils.locator"/>
+    <!--<module name="machine-tm4c1294-launchpad.ti_libs.utils.lwiplib"/>-->
+    <!--<module name="machine-tm4c1294-launchpad.ti_libs.utils.locator"/>-->
     <module name="machine-tm4c1294-launchpad.ti_libs.examples.boards.ek-tm4c1294xl.drivers.pinout"/>
 
-
-
-    <module name="armv7m.ctxt-switch" />
-    <module name="armv7m.vectable">
-      <systick>tick_irq</systick>
+    <module name="machine-tm4c1294-launchpad.armv7m_ti.ctxt-switch-preempt" />
+    <module name="machine-tm4c1294-launchpad.armv7m_ti.exception-preempt">
+      <trampolines>
+        <trampoline>
+          <name>systick</name>
+          <handler>tick_irq</handler>
+        </trampoline>
+      </trampolines>
+    </module>
+    <module name="machine-tm4c1294-launchpad.armv7m_ti.vectable">
       <flash_load_addr>0x0000000</flash_load_addr>
+      <preemption>true</preemption>
+      <systick>exception_preempt_trampoline_systick</systick>
+      <nmi>nmi</nmi>
+      <hardfault>hardfault</hardfault>
+      <memmanage>memmanage</memmanage>
+      <usagefault>usagefault</usagefault>
     </module>
 
-    <module name="armv7m.rtos-rigel">
-      <prefix>rtos</prefix>
-      <signalset_size>8</signalset_size>
+    <module name="machine-tm4c1294-launchpad.armv7m_ti.rtos-kochab">
       <api_asserts>true</api_asserts>
       <internal_asserts>true</internal_asserts>
       <fatal_error>fatal</fatal_error>
-
-
+      <prefix>rtos</prefix>
+      <taskid_size>8</taskid_size>
+      <signalset_size>8</signalset_size>
       <tasks>
-
         <task>
           <name>a</name>
           <function>fn_a</function>
-          <stack_size>64</stack_size>
-          <start>true</start>
+          <priority>30</priority>
+          <stack_size>8192</stack_size>
         </task>
 
         <task>
           <name>b</name>
           <function>fn_b</function>
-          <stack_size>64</stack_size>
+          <priority>10</priority>
+          <stack_size>8192</stack_size>
         </task>
 
       </tasks>
 
+      <signal_labels>
+
+        <signal_label>
+          <name>timer</name>
+        </signal_label>
+
+        <signal_label>
+          <name>test</name>
+        </signal_label>
+
+      </signal_labels>
+
+      <interrupt_events>
+        <interrupt_event>
+          <name>tick</name>
+          <task>a</task>
+          <sig_set>timer</sig_set>
+        </interrupt_event>
+      </interrupt_events>
+
+      <mutexes>
+        <mutex>
+          <name>m0</name>
+        </mutex>
+      </mutexes>
       <mutex>
-        <stats>true</stats>
+        <stats>false</stats>
       </mutex>
-
-      <profiling>
-        <task_uptime>true</task_uptime>
-      </profiling>
-
     </module>
 
-    <module name="machine-tm4c1294-launchpad.src.rigel-ethernet"/>
+    <module name="machine-tm4c1294-launchpad.src.kochab-test"/>
 
   </modules>
 </system>

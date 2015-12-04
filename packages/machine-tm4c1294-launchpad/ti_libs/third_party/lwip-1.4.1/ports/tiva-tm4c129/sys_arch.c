@@ -112,8 +112,8 @@ typedef struct {
   void *stackend;
   void (*thread)(void *arg);
   void *arg;
-#if RTOS_FREERTOS
-  xTaskHandle taskhandle;
+#if RTOS_ECHRONOS
+  RtosTaskId taskhandle;
 #endif /* RTOS_FREERTOS */
 } thread_t;
 

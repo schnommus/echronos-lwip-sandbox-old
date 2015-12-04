@@ -28,32 +28,84 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "inc/hw_memmap.h"
+#include "inc/hw_types.h"
+#include "driverlib/gpio.h"
+#include "drivers/pinout.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/rom.h"
+#include "driverlib/rom_map.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/uart.h"
+#include "utils/uartstdio.h"
 
 #include "rtos-kochab.h"
-#include "machine-timer.h"
-#include "debug.h"
 
-bool tick_irq(void);
-void fatal(RtosErrorId error_id);
-void fn_a(void);
-void fn_b(void);
+#define debug_println(text) UARTprintf(text);UARTprintf("\n")
 
-bool
-tick_irq(void)
+
+#define SYST_CSR_REG 0xE000E010
+#define SYST_RVR_REG 0xE000E014
+#define SYST_CVR_REG 0xE000E018
+
+#define SYST_CSR_READ() (*((volatile uint32_t*)SYST_CSR_REG))
+#define SYST_CSR_WRITE(x) (*((volatile uint32_t*)SYST_CSR_REG) = x)
+
+#define SYST_RVR_READ() (*((volatile uint32_t*)SYST_RVR_REG))
+#define SYST_RVR_WRITE(x) (*((volatile uint32_t*)SYST_RVR_REG) = x)
+
+#define SYST_CVR_READ() (*((volatile uint32_t*)SYST_CVR_REG))
+#define SYST_CVR_WRITE(x) (*((volatile uint32_t*)SYST_CVR_REG) = x)
+
+#ifdef DEBUG
+void __error__( char *pcFilename, uint32_t ui32Line ) {
+    for(;;);
+}
+#endif
+
+void nmi() { for(;;); }
+void hardfault() { for(;;); }
+void memmanage() { for(;;); }
+void busfault() { for(;;); }
+void usagefault() { for(;;); }
+
+uint32_t g_ui32SysClock;
+
+void
+ConfigureUART(void)
 {
-    machine_timer_clear();
+    //
+    // Enable the GPIO Peripheral used by the UART.
+    //
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 
+    //
+    // Enable UART0
+    //
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
+
+    //
+    // Configure GPIO Pins for UART mode.
+    //
+    ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
+    ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
+    ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+    //
+    // Initialize the UART for console I/O.
+    //
+    UARTStdioConfig(0, 115200, g_ui32SysClock);
+}
+
+bool tick_irq(void) {
     rtos_interrupt_event_raise(RTOS_INTERRUPT_EVENT_ID_TICK);
-
     return true;
 }
 
 void
 fatal(const RtosErrorId error_id)
 {
-    debug_print("FATAL ERROR: ");
-    debug_printhex32(error_id);
-    debug_println("");
+    debug_println("FATAL ERROR");
     for (;;)
     {
     }
@@ -86,6 +138,7 @@ fn_a(void)
     debug_println("A now waiting for ticks");
     for (;;)
     {
+
         (void) rtos_signal_wait_set(RTOS_SIGNAL_SET_TIMER);
         debug_println("tick");
         rtos_signal_send_set(RTOS_TASK_ID_B, RTOS_SIGNAL_SET_TEST);
@@ -111,10 +164,20 @@ fn_b(void)
 int
 main(void)
 {
-    machine_timer_init();
+    SYST_RVR_WRITE(0x0001ffff);
+    SYST_CVR_WRITE(0);
+    SYST_CSR_WRITE((1 << 1) | 1);
 
-    debug_println("Starting RTOS");
+    g_ui32SysClock = MAP_SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ |
+                SYSCTL_OSC_MAIN | SYSCTL_USE_PLL |
+                SYSCTL_CFG_VCO_480), 120000000);
+
+    ConfigureUART();
+
+    debug_println("Starting eChronos core (Kochab)...");
+
     rtos_start();
+
     /* Should never reach here, but if we do, an infinite loop is
        easier to debug than returning somewhere random. */
     for (;;) ;
