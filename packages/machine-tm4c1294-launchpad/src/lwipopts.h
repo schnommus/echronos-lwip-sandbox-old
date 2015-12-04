@@ -57,13 +57,14 @@
 //*****************************************************************************
 
 #define SYS_LIGHTWEIGHT_PROT            1           // default is 0
-//Unnecessary ^^ (for bare-metal systems)
-#define NO_SYS                          1           // default is 0
-/* ECHRONOS
+//#define NO_SYS                          1           // default is 0
+// ^^ (for bare-metal systems)
+//
+/* ECHRONOS */
 #define NO_SYS                          0           // default is 0
 #define RTOS_ECHRONOS 1
-#define ECHRONOS_HEADER "rtos-rigel.h"
-*/
+#define ECHRONOS_HEADER "rtos-kochab.h"
+/* */
 
 //#define MEMCPY(dst,src,len)             memcpy(dst,src,len)
 //#define SMEMCPY(dst,src,len)            memcpy(dst,src,len)

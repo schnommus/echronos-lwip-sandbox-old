@@ -232,6 +232,7 @@ CORE_SKELETONS = {
                Component('interrupt-event-signal', {'task_set': False}),
                Component('blocking-mutex', {'lock_timeout': True, 'preemptive': True, 'prio_ceiling': False}),
                Component('simple-semaphore', {'timeouts': True, 'preemptive': True}),
+               Component('message-queue'),
                Component('error'),
                Component('task', {'task_start_api': False}),
                Component('kochab'),
