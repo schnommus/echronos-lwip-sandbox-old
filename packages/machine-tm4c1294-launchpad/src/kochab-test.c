@@ -105,7 +105,7 @@ bool tick_irq(void) {
 void
 fatal(const RtosErrorId error_id)
 {
-    debug_println("FATAL ERROR");
+    UART_printf("FATAL ERROR\n");
     for (;;)
     {
     }
@@ -116,31 +116,31 @@ fn_a(void)
 {
     uint8_t count;
 
-    debug_println("task a: taking lock");
+    UART_printf("task a: taking lock\n");
     rtos_mutex_lock(RTOS_MUTEX_ID_M0);
     if (rtos_mutex_try_lock(RTOS_MUTEX_ID_M0))
     {
-        debug_println("unexpected mutex not locked.");
+        UART_printf("unexpected mutex not locked.\n");
     }
-    debug_println("task a: releasing lock");
+    UART_printf("task a: releasing lock\n");
     rtos_mutex_unlock(RTOS_MUTEX_ID_M0);
 
     for (count = 0; count < 10; count++)
     {
-        debug_println("task a");
+        UART_printf("task a\n");
         if (count % 5 == 0)
         {
-            debug_println("unblocking b");
+            UART_printf("unblocking b\n");
             rtos_signal_send_set(RTOS_TASK_ID_B, RTOS_SIGNAL_SET_TEST);
         }
     }
 
-    debug_println("A now waiting for ticks");
+    UART_printf("A now waiting for ticks\n");
     for (;;)
     {
 
         (void) rtos_signal_wait_set(RTOS_SIGNAL_SET_TIMER);
-        debug_println("tick");
+        UART_printf("tick\n");
         rtos_signal_send_set(RTOS_TASK_ID_B, RTOS_SIGNAL_SET_TEST);
     }
 }
@@ -148,15 +148,15 @@ fn_a(void)
 void
 fn_b(void)
 {
-    debug_println("task b: attempting lock");
+    UART_printf("task b: attempting lock\n");
     rtos_mutex_lock(RTOS_MUTEX_ID_M0);
-    debug_println("task b: got lock");
+    UART_printf("task b: got lock\n");
 
     while (1) {
         if (rtos_signal_poll_set(RTOS_SIGNAL_SET_TEST)) {
-            debug_println("task b blocking");
+            UART_printf("task b blocking\n");
             (void) rtos_signal_wait_set(RTOS_SIGNAL_SET_TEST);
-            debug_println("task b unblocked");
+            UART_printf("task b unblocked\n");
         }
     }
 }
@@ -174,7 +174,7 @@ main(void)
 
     ConfigureUART();
 
-    debug_println("Starting eChronos core (Kochab)...");
+    UART_printf("Starting eChronos core (Kochab)...\n");
 
     rtos_start();
 

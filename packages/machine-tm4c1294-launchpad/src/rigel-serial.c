@@ -39,7 +39,6 @@
 #include "driverlib/uart.h"
 #include "utils/uartstdio.h"
 
-
 #include "rtos-rigel.h"
 
 #define SYST_CSR_REG 0xE000E010
@@ -58,8 +57,7 @@
 uint32_t g_ui32SysClock;
 
 void
-ConfigureUART(void)
-{
+ConfigureUART(void) {
     //
     // Enable the GPIO Peripheral used by the UART.
     //
@@ -84,56 +82,45 @@ ConfigureUART(void)
 }
 
 void
-tick_irq(void)
-{
+tick_irq(void) {
     //Don't use UART inside an interrupt! Results in fatal.
     //UARTprintf("irq tick\n");
     rtos_timer_tick();
 }
 
 void
-fatal(RtosErrorId error_id)
-{
+fatal(RtosErrorId error_id) {
     UARTprintf("FATAL ERROR: %d\n", error_id);
     UARTprintf("\n");
-    for (;;)
-    {
-    }
+    for (;;) { }
 }
 
 void
-fn_a(void)
-{
+fn_a(void) {
     volatile int i;
     uint8_t count;
 
     rtos_task_start(RTOS_TASK_ID_B);
 
-    if (rtos_task_current() != RTOS_TASK_ID_A)
-    {
+    if (rtos_task_current() != RTOS_TASK_ID_A) {
         UARTprintf("task a: wrong task??\n");
-        for (;;)
-        {
-        }
+        for (;;) { }
     }
 
 
     UARTprintf("task a: taking lock\n");
     rtos_mutex_lock(RTOS_MUTEX_ID_TEST);
     rtos_yield();
-    if (rtos_mutex_try_lock(RTOS_MUTEX_ID_TEST))
-    {
+    if (rtos_mutex_try_lock(RTOS_MUTEX_ID_TEST)) {
         UARTprintf("task a: ERROR: unexpected mutex not locked.\n");
     }
     UARTprintf("task a: releasing lock\n");
     rtos_mutex_unlock(0);
     rtos_yield();
 
-    for (count = 0; count < 10; count++)
-    {
+    for (count = 0; count < 10; count++) {
         UARTprintf("task a\n");
-        if (count % 5 == 0)
-        {
+        if (count % 5 == 0) {
             UARTprintf("task a: unblocking b\n");
             rtos_signal_send(RTOS_TASK_ID_B, RTOS_SIGNAL_ID_TEST);
         }
@@ -148,7 +135,6 @@ fn_a(void)
     rtos_sleep(5);
     UARTprintf("task a: sleep done\n");
 
-
     do {
         UARTprintf("task a: remaining test - %d\n", rtos_timer_current_ticks);
         UARTprintf("\n");
@@ -157,8 +143,7 @@ fn_a(void)
 
 
 
-    if (!rtos_signal_poll(RTOS_SIGNAL_ID_TIMER))
-    {
+    if (!rtos_signal_poll(RTOS_SIGNAL_ID_TIMER)) {
         UARTprintf("ERROR: couldn't poll expected timer.\n");
     }
 
@@ -167,34 +152,27 @@ fn_a(void)
 
     /* Spin for a bit - force a missed ticked */
     UARTprintf("task a: start delay\n");
-    for (i = 0 ; i < 50000000; i++)
-    {
-
-    }
+    for (i = 0 ; i < 50000000; i++) { }
     UARTprintf("task a: complete delay\n");
     rtos_yield();
 
     UARTprintf("task a: now waiting for ticks\n");
-    for (;;)
-    {
+    for (;;) {
         rtos_signal_wait(RTOS_SIGNAL_ID_TIMER);
         UARTprintf("task a: timer tick\n");
     }
 }
 
 void
-fn_b(void)
-{
-    for (;;)
-    {
+fn_b(void) {
+    for (;;) {
         UARTprintf("task b: sleeping for 7\n");
         rtos_sleep(7);
     }
 }
 
 int
-main(void)
-{
+main(void) {
     /* Set the systick reload value */
     SYST_RVR_WRITE(0x0001ffff);
     SYST_CVR_WRITE(0);

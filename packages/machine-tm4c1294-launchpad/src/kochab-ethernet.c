@@ -43,7 +43,6 @@
 
 #define debug_println(text) UARTprintf(text);UARTprintf("\n")
 
-
 #define SYST_CSR_REG 0xE000E010
 #define SYST_RVR_REG 0xE000E014
 #define SYST_CVR_REG 0xE000E018

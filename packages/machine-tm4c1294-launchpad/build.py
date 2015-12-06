@@ -27,6 +27,7 @@
 
 from prj import execute, SystemBuildError
 import os
+import pickle
 
 
 def run(system, configuration=None):
@@ -52,6 +53,22 @@ def system_build(system):
     cpu_fpu = [ '-mfpu=fpv4-sp-d16', '-mfloat-abi=softfp']
 
     inc_path_args = ['-I%s' % i for i in system.include_paths]
+
+    # All this code is to pickle include paths to a file for autocompletion tags
+    ycmIncludes = []
+    for path in system.include_paths:
+        if path[0] != '/':
+            ycmIncludes.append( os.getcwd() + '/' + path )
+        else:
+            ycmIncludes.append( path )
+
+    ycm_path_args = ['-I%s' % i for i in ycmIncludes]
+
+    print("== DUMPING YCM INCLUDES ==")
+    print(ycm_path_args)
+
+    pickle.dump( ycm_path_args, open( 'ycm_prj_include_dump.p', 'wb'), protocol=2 )
+
     common_flags = ['-mthumb', '-march=armv7-m', '-g3'] + cpu_fpu
     a_flags = common_flags
     c_flags = common_flags + ['-Os', '-DTARGET_IS_TM4C129_RA0', '-DPART_TM4C1294NCPDT', '-Dgcc', '-std=gnu99', '-g', '-DDEBUG' ]
