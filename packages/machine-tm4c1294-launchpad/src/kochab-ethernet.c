@@ -97,9 +97,10 @@ ConfigureUART(void)
 }
 
 bool tick_irq(void) {
-    rtos_interrupt_event_raise(RTOS_INTERRUPT_EVENT_ID_TICK);
+    rtos_interrupt_event_raise( RTOS_INTERRUPT_EVENT_ID_TICK );
     return true;
 }
+
 
 void
 fatal(const RtosErrorId error_id)

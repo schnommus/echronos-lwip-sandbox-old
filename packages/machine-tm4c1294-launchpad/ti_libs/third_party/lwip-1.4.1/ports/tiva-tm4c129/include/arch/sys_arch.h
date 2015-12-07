@@ -32,10 +32,11 @@
 #ifndef __ARCH_SYS_ARCH_H__
 #define __ARCH_SYS_ARCH_H__
 
+#include "lwipopts.h"
+
 #if RTOS_ECHRONOS
 #include ECHRONOS_HEADER
 #define portQUEUE_OVERHEAD_BYTES 1  // Constant, used for consistency
-#define LWIP_COMPAT_MUTEX 1
 #endif
 
 /* Find the size of the largest required mbox. */
@@ -45,25 +46,28 @@
               DEFAULT_UDP_RECVMBOX_SIZE)
 #define MAX3 ((MAX2 > DEFAULT_TCP_RECVMBOX_SIZE) ? MAX2 : \
               DEFAULT_TCP_RECVMBOX_SIZE)
-#define MBOX_MAX ((MAX3 > DEFAULT_ACCEPTMBOX_SIZE) ? MAX3 : \
-                  DEFAULT_ACCEPTMBOX_SIZE)
+//#define MBOX_MAX ((MAX3 > DEFAULT_ACCEPTMBOX_SIZE) ? MAX3 : 
+//                  DEFAULT_ACCEPTMBOX_SIZE)
 
 ///* A structure to hold the variables for a sys_sem_t. */
 typedef struct {
-  RtosMessageQueueId queue;
-  signed char buffer[sizeof(void *) + portQUEUE_OVERHEAD_BYTES];
+  RtosSemId sem;
+  bool isUsed;
+  // These buffers don't seem to be used
+  //signed char buffer[sizeof(void *) + portQUEUE_OVERHEAD_BYTES];
 } sem_t;
 
 /* A structure to hold the variables for a sys_mbox_t. */
 typedef struct {
   RtosMessageQueueId queue;
-  signed char buffer[(sizeof(void *) * MBOX_MAX) + portQUEUE_OVERHEAD_BYTES];
+  bool isUsed;
+  // These buffers don't seem to be used
+  // signed char buffer[(sizeof(void *) * MBOX_MAX) + portQUEUE_OVERHEAD_BYTES];
 } mbox_t;
 
 /* Typedefs for the various port-specific types. */
 typedef mbox_t sys_mbox_t;
 typedef sem_t sys_sem_t;
-typedef RtosTaskId sys_thread_t;
 
 /* The value for an unallocated mbox. */
 #define SYS_MBOX_NULL       0

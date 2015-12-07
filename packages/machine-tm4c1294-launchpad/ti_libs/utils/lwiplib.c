@@ -204,17 +204,15 @@ extern void lwIPHostTimerHandler(void);
 #include "driverlib/rom.h"
 #include "driverlib/rom_map.h"
 #include "driverlib/sysctl.h"
+
 #if !NO_SYS
-#if RTOS_FREERTOS
-#include "FreeRTOS.h"
-#include "task.h"
-#include "queue.h"
-#include "semphr.h"
+#if RTOS_ECHRONOS
+    #include ECHRONOS_HEADER 
 #endif
-#if ((RTOS_FREERTOS) < 1)
+#if ((RTOS_ECHRONOS) < 1)
     #error No RTOS is defined.  Please define an RTOS.
 #endif
-#if ((RTOS_FREERTOS) > 1)
+#if ((RTOS_ECHRONOS) > 1)
     #error More than one RTOS defined.  Please define only one RTOS at a time.
 #endif
 #endif
@@ -384,23 +382,13 @@ static uint32_t g_ui32GWAddr;
 
 //*****************************************************************************
 //
-// The handle for the "queue" (semaphore) used to signal the interrupt task
-// from the interrupt handler.
-//
-//*****************************************************************************
-#if !NO_SYS
-static xQueueHandle g_pInterrupt;
-#endif
-
-//*****************************************************************************
-//
 // This task handles reading packets from the Ethernet controller and supplying
 // them to the TCP/IP thread.
 //
 //*****************************************************************************
 #if !NO_SYS
-static void
-lwIPInterruptTask(void *pvArg)
+void
+ethernet_interrupt_task()
 {
     //
     // Loop forever.
@@ -410,14 +398,13 @@ lwIPInterruptTask(void *pvArg)
         //
         // Wait until the semaphore has been signaled.
         //
-        while(xQueueReceive(g_pInterrupt, &pvArg, portMAX_DELAY) != pdPASS)
-        {
-        }
+        uint32_t ui32Status;
+        rtos_message_queue_get( RTOS_MESSAGE_QUEUE_ID_LWIP_ETHERNET_QUEUE, &ui32Status ); 
 
         //
         // Processes any packets waiting to be sent or received.
         //
-        tivaif_interrupt(&g_sNetIF, (uint32_t)pvArg);
+        tivaif_interrupt(&g_sNetIF, ui32Status);
 
         //
         // Re-enable the Ethernet interrupts.
@@ -708,26 +695,7 @@ lwIPPrivateInit(void *pvArg)
     lwip_init();
 #endif
 
-    //
-    // If using a RTOS, create a queue (to be used as a semaphore) to signal
-    // the Ethernet interrupt task from the Ethernet interrupt handler.
-    //
-#if !NO_SYS
-#if RTOS_FREERTOS
-    g_pInterrupt = xQueueCreate(1, sizeof(void *));
-#endif
-#endif
-
-    //
-    // If using a RTOS, create the Ethernet interrupt task.
-    //
-#if !NO_SYS
-#if RTOS_FREERTOS
-    xTaskCreate(lwIPInterruptTask, (signed portCHAR *)"eth_int",
-                STACKSIZE_LWIPINTTASK, 0, tskIDLE_PRIORITY + 1,
-                0);
-#endif
-#endif
+    //Used to do task creation here. eChronos does this automatically
 
     //
     // Setup the network address values.
@@ -1002,14 +970,13 @@ lwIPTimer(uint32_t ui32TimeMS)
 //! \return None.
 //
 //*****************************************************************************
+
+//TODO: Call from vtable!
 void
 lwIPEthernetIntHandler(void)
 {
     uint32_t ui32Status;
     uint32_t ui32TimerStatus;
-#if !NO_SYS
-    portBASE_TYPE xWake;
-#endif
 
     //
     // Read and Clear the interrupt.
@@ -1065,7 +1032,7 @@ lwIPEthernetIntHandler(void)
     //
     // A RTOS is being used.  Signal the Ethernet interrupt task.
     //
-    xQueueSendFromISR(g_pInterrupt, (void *)&ui32Status, &xWake);
+    rtos_message_queue_put( RTOS_MESSAGE_QUEUE_ID_LWIP_ETHERNET_QUEUE, &ui32Status ); 
 
     //
     // Disable the Ethernet interrupts.  Since the interrupts have not been
@@ -1079,13 +1046,13 @@ lwIPEthernetIntHandler(void)
 
     //
     // Potentially task switch as a result of the above queue write.
-    //
-#if RTOS_FREERTOS
+    // (eChronos should automatically do this
+/*#if RTOS_FREERTOS
     if(xWake == pdTRUE)
     {
         portYIELD_FROM_ISR(true);
     }
-#endif
+#endif*/
 #endif
 }
 

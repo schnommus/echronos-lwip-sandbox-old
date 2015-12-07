@@ -64,8 +64,8 @@
 
     <module name="machine-tm4c1294-launchpad.ti_libs.utils.uartstdio"/>
     <module name="machine-tm4c1294-launchpad.ti_libs.utils.ustdlib"/>
-    <!--<module name="machine-tm4c1294-launchpad.ti_libs.utils.lwiplib"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.utils.locator"/>-->
+    <module name="machine-tm4c1294-launchpad.ti_libs.utils.lwiplib"/>
+    <module name="machine-tm4c1294-launchpad.ti_libs.utils.locator"/>
     <module name="machine-tm4c1294-launchpad.ti_libs.examples.boards.ek-tm4c1294xl.drivers.pinout"/>
 
     <module name="machine-tm4c1294-launchpad.armv7m_ti.ctxt-switch-preempt" />
@@ -95,6 +95,10 @@
       <taskid_size>8</taskid_size>
       <signalset_size>8</signalset_size>
       <tasks>
+
+        <!-- Priority convention: 
+             1 is idle priority -->
+
         <task>
           <name>a</name>
           <function>fn_a</function>
@@ -106,6 +110,20 @@
           <name>b</name>
           <function>fn_b</function>
           <priority>10</priority>
+          <stack_size>8192</stack_size>
+        </task>
+
+        <task>
+          <name>tcpip_thread</name>
+          <function>tcpip_thread</function>
+          <priority>14</priority>
+          <stack_size>8192</stack_size>
+        </task>
+
+        <task>
+          <name>ethernet_interrupt_task</name>
+          <function>ethernet_interrupt_task</function>
+          <priority>2</priority>
           <stack_size>8192</stack_size>
         </task>
 
@@ -121,6 +139,10 @@
           <name>test</name>
         </signal_label>
 
+        <signal_label>
+          <name>start_tcpip_thread</name>
+        </signal_label>
+
       </signal_labels>
 
       <interrupt_events>
@@ -129,6 +151,7 @@
           <task>a</task>
           <sig_set>timer</sig_set>
         </interrupt_event>
+
       </interrupt_events>
 
       <mutexes>
@@ -154,7 +177,48 @@
             <message_size>4</message_size>
             <queue_length>10</queue_length>
         </message_queue>
+        <message_queue>
+            <name>lwip_ethernet_queue</name>
+            <message_size>4</message_size>
+            <queue_length>64</queue_length>
+        </message_queue>
+        <message_queue>
+            <name>lwip_aux_queue_1</name>
+            <message_size>4</message_size>
+            <queue_length>64</queue_length>
+        </message_queue>
+        <message_queue>
+            <name>lwip_aux_queue_2</name>
+            <message_size>4</message_size>
+            <queue_length>64</queue_length>
+        </message_queue>
+        <message_queue>
+            <name>lwip_aux_queue_3</name>
+            <message_size>4</message_size>
+            <queue_length>64</queue_length>
+        </message_queue>
+        <message_queue>
+            <name>lwip_aux_queue_4</name>
+            <message_size>4</message_size>
+            <queue_length>64</queue_length>
+        </message_queue>
     </message_queues>
+
+    <semaphores>
+        <semaphore>
+            <name>lwip_aux_sem_1</name>
+        </semaphore>
+        <semaphore>
+            <name>lwip_aux_sem_2</name>
+        </semaphore>
+        <semaphore>
+            <name>lwip_aux_sem_3</name>
+        </semaphore>
+        <semaphore>
+            <name>lwip_aux_sem_4</name>
+        </semaphore>
+    </semaphores>
+
     </module>
 
     <module name="machine-tm4c1294-launchpad.src.kochab-ethernet"/>

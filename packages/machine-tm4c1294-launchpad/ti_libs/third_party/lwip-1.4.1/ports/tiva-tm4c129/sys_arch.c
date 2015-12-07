@@ -105,23 +105,6 @@ sys_arch_unprotect(sys_prot_t lev)
 #endif /* SYS_LIGHTWEIGHT_PROT */
 
 #else /* NO_SYS */
-
-/* A structure to contain the variables for a sys_thread_t. */
-typedef struct {
-  void *stackstart;
-  void *stackend;
-  void (*thread)(void *arg);
-  void *arg;
-#if RTOS_ECHRONOS
-  RtosTaskId taskhandle;
-#endif /* RTOS_FREERTOS */
-} thread_t;
-
-/* Provide a default maximum number of threads. */
-#ifndef SYS_THREAD_MAX
-#define SYS_THREAD_MAX          4
-#endif /* SYS_THREAD_MAX */
-
 /* Provide a default maximum number of semaphores. */
 #ifndef SYS_SEM_MAX
 #define SYS_SEM_MAX             4
@@ -138,9 +121,6 @@ static sem_t sems[SYS_SEM_MAX];
 /* An array to hold the memory for the available mailboxes. */
 static mbox_t mboxes[SYS_MBOX_MAX];
 
-/* An array to hold the memory for the available threads. */
-static thread_t threads[SYS_THREAD_MAX];
-
 /**
  * Initializes the system architecture layer.
  *
@@ -150,21 +130,26 @@ sys_init(void)
 {
   u32_t i;
 
-  /* Clear out the mailboxes. */
-  for(i = 0; i < SYS_MBOX_MAX; i++) {
-    mboxes[i].queue = 0;
+#if RTOS_ECHRONOS
+  for( i = 0; i < SYS_MBOX_MAX; ++i ) {
+      mboxes[i].isUsed = false;
   }
 
-  /* Clear out the semaphores. */
+  mboxes[0].queue = RTOS_MESSAGE_QUEUE_ID_LWIP_AUX_QUEUE_1;
+  mboxes[1].queue = RTOS_MESSAGE_QUEUE_ID_LWIP_AUX_QUEUE_2;
+  mboxes[2].queue = RTOS_MESSAGE_QUEUE_ID_LWIP_AUX_QUEUE_3;
+  mboxes[3].queue = RTOS_MESSAGE_QUEUE_ID_LWIP_AUX_QUEUE_4;
+
+
   for(i = 0; i < SYS_SEM_MAX; i++) {
-    sems[i].queue = 0;
+      sems[i].isUsed = false;
   }
 
-  /* Clear out the threads. */
-  for(i = 0; i < SYS_THREAD_MAX; i++) {
-    threads[i].stackstart = NULL;
-    threads[i].stackend = NULL;
-  }
+  sems[0].sem = RTOS_SEM_ID_LWIP_AUX_SEM_1;
+  sems[1].sem = RTOS_SEM_ID_LWIP_AUX_SEM_2;
+  sems[2].sem = RTOS_SEM_ID_LWIP_AUX_SEM_3;
+  sems[3].sem = RTOS_SEM_ID_LWIP_AUX_SEM_3;
+#endif
 }
 
 /**
@@ -176,12 +161,11 @@ sys_init(void)
 err_t
 sys_sem_new(sys_sem_t *sem, u8_t count)
 {
-  void *temp;
   u32_t i;
 
   /* Find a semaphore that is not in use. */
   for(i = 0; i < SYS_SEM_MAX; i++) {
-    if(sems[i].queue == 0) {
+    if(!sems[i].isUsed) {
       break;
     }
   }
@@ -192,23 +176,15 @@ sys_sem_new(sys_sem_t *sem, u8_t count)
     return ERR_MEM;
   }
 
-  /* Create a single-entry queue to act as a semaphore. */
-#if RTOS_FREERTOS
-  sem->queue = xQueueCreate(1, sizeof(void *));
-  if(sem->queue == NULL) {
+#if RTOS_ECHRONOS
+  sems[i].isUsed = true;
+  *sem = sems[i];
+
+  // Set up initial count
+  for( i = 0; i != count; ++i ) {
+     rtos_sem_post( sem->sem );
+  }
 #endif /* RTOS_FREERTOS */
-
-#if SYS_STATS
-    STATS_INC(sys.sem.err);
-#endif /* SYS_STATS */
-    return ERR_MEM;
-  }
-
-  /* Acquired the semaphore if necessary. */
-  if(count == 0) {
-    temp = 0;
-    xQueueSend(sem->queue, &temp, 0);
-  }
 
   /* Update the semaphore statistics. */
 #if SYS_STATS
@@ -219,9 +195,6 @@ sys_sem_new(sys_sem_t *sem, u8_t count)
   }
 #endif
 #endif /* SYS_STATS */
-
-  /* Save the queue handle. */
-  sems[i].queue = sem->queue;
 
   /* Return this semaphore. */
   return (ERR_OK);
@@ -235,10 +208,7 @@ sys_sem_new(sys_sem_t *sem, u8_t count)
 void
 sys_sem_signal(sys_sem_t *sem)
 {
-  void *msg;
-
-  /* Receive a message from the semaphore's queue. */
-  xQueueReceive(sem->queue, &msg, 0);
+  rtos_sem_post( sem->sem );
 }
 
 /**
@@ -253,29 +223,11 @@ sys_sem_signal(sys_sem_t *sem)
 u32_t
 sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 {
-  portTickType starttime;
-  void *msg = 0;
-
-  /* Get the starting time. */
-  starttime = xTaskGetTickCount();
-
-  /* See if there is a timeout. */
-  if(timeout != 0) {
-    /* Send a message to the queue. */
-    if(xQueueSend(sem->queue, &msg, timeout / portTICK_RATE_MS) == pdPASS) {
-      /* Return the amount of time it took for the semaphore to be
-         signalled. */
-      return (xTaskGetTickCount() - starttime) * portTICK_RATE_MS;
-    } else {
-      /* The semaphore failed to signal in the allotted time. */
-      return SYS_ARCH_TIMEOUT;
-    }
+  RtosTicksAbsolute before_wait = rtos_timer_current_ticks;
+  if( rtos_sem_wait_timeout( sem->sem, timeout / SYS_TICK_INTERVAL ) ) {
+      return SYS_TICK_INTERVAL * (rtos_timer_current_ticks - before_wait);
   } else {
-    /* Try to send a message to the queue until it succeeds. */
-    while(xQueueSend(sem->queue, &msg, portMAX_DELAY) != pdPASS);
-
-    /* Return the amount of time it took for the semaphore to be signalled. */
-    return (xTaskGetTickCount() - starttime) * portTICK_RATE_MS;
+      return SYS_ARCH_TIMEOUT;
   }
 }
 
@@ -287,8 +239,11 @@ sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout)
 void
 sys_sem_free(sys_sem_t *sem)
 {
-  /* Clear the queue handle. */
-  sem->queue = 0;
+    // Push the semaphore down to zero
+    while( rtos_sem_try_wait( sem->sem ) );
+
+    // It's no longer used
+    sem->isUsed = false;
 
   /* Update the semaphore statistics. */
 #if SYS_STATS
@@ -317,10 +272,11 @@ sys_mbox_new(sys_mbox_t *mbox, int size)
 
   /* Find a mailbox that is not in use. */
   for(i = 0; i < SYS_MBOX_MAX; i++) {
-    if(mboxes[i].queue == 0) {
+    if( !mboxes[i].isUsed ) {
       break;
     }
   }
+
   if(i == SYS_MBOX_MAX) {
 #if SYS_STATS
     STATS_INC(sys.mbox.err);
@@ -328,17 +284,11 @@ sys_mbox_new(sys_mbox_t *mbox, int size)
     return ERR_MEM;
   }
 
-#if RTOS_FREERTOS
+#if RTOS_ECHRONOS
   /* Create a queue for this mailbox. */
-  mbox->queue = xQueueCreate(size, sizeof(void *));
-  if(mbox == NULL) {
-#endif /* RTOS_FREERTOS */
-
-#if SYS_STATS
-    STATS_INC(sys.mbox.err);
-#endif /* SYS_STATS */
-    return ERR_MEM;
-  }
+  mbox->queue = mboxes[i].queue;
+  mbox->isUsed = true;
+#endif
 
   /* Update the mailbox statistics. */
 #if SYS_STATS
@@ -349,9 +299,6 @@ sys_mbox_new(sys_mbox_t *mbox, int size)
   }
 #endif
 #endif /* SYS_STATS */
-
-  /* Save the queue handle. */
-  mboxes[i].queue = mbox->queue;
 
   /* Return this mailbox. */
   return ERR_OK;
@@ -366,8 +313,7 @@ sys_mbox_new(sys_mbox_t *mbox, int size)
 void
 sys_mbox_post(sys_mbox_t *mbox, void *msg)
 {
-  /* Send this message to the queue. */
-  while(xQueueSend(mbox->queue, &msg, portMAX_DELAY) != pdPASS);
+  rtos_message_queue_put( mbox->queue,  &msg );
 }
 
 /**
@@ -381,9 +327,8 @@ sys_mbox_post(sys_mbox_t *mbox, void *msg)
 err_t
 sys_mbox_trypost(sys_mbox_t *mbox, void *msg)
 {
-  /* Send this message to the queue. */
-  if(xQueueSend(mbox->queue, &msg, 0) == pdPASS) {
-    return ERR_OK;
+  if( rtos_message_queue_try_put( mbox->queue, &msg ) ) {
+     return ERR_OK;
   }
 
   /* Update the mailbox statistics. */
@@ -407,35 +352,11 @@ sys_mbox_trypost(sys_mbox_t *mbox, void *msg)
 u32_t
 sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, u32_t timeout)
 {
-  portTickType starttime;
-  void *dummyptr;
-
-  /* If the actual message contents are not required, provide a local variable
-     to recieve the message. */
-  if(msg == NULL) {
-    msg = &dummyptr;
-  }
-
-  /* Get the starting time. */
-  starttime = xTaskGetTickCount();
-
-  /* See if there is a timeout. */
-  if(timeout != 0) {
-    /* Receive a message from the queue. */
-    if(xQueueReceive(mbox->queue, msg, timeout / portTICK_RATE_MS) == pdPASS) {
-      /* Return the amount of time it took for the message to be received. */
-      return (xTaskGetTickCount() - starttime) * portTICK_RATE_MS;
-    } else {
-      /* No message arrived in the allotted time. */
-      *msg = NULL;
-      return SYS_ARCH_TIMEOUT;
-    }
+  RtosTicksAbsolute before_wait = rtos_timer_current_ticks;
+  if( rtos_message_queue_get_timeout( mbox->queue, msg, timeout/SYS_TICK_INTERVAL ) ) {
+      return SYS_TICK_INTERVAL * (rtos_timer_current_ticks - before_wait);
   } else {
-    /* Try to receive a message until one arrives. */
-    while(xQueueReceive(mbox->queue, msg, portMAX_DELAY) != pdPASS);
-
-    /* Return the amount of time it took for the message to be received. */
-    return (xTaskGetTickCount() - starttime) * portTICK_RATE_MS;
+      return SYS_ARCH_TIMEOUT;
   }
 }
 
@@ -451,20 +372,9 @@ sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, u32_t timeout)
 u32_t
 sys_arch_mbox_tryfetch(sys_mbox_t *mbox, void **msg)
 {
-  void *dummyptr;
-
-  /* If the actual message contents are not required, provide a local variable
-     to recieve the message. */
-  if(msg == NULL) {
-    msg = &dummyptr;
-  }
-
-  /* Recieve a message from the queue. */
-  if(xQueueReceive(mbox->queue, msg, 0) == pdPASS) {
-    /* A message was available. */
+  if( rtos_message_queue_try_get( mbox->queue, msg ) ) {
     return ERR_OK;
   } else {
-    /* A message was not available. */
     return SYS_MBOX_EMPTY;
   }
 }
@@ -477,10 +387,12 @@ sys_arch_mbox_tryfetch(sys_mbox_t *mbox, void **msg)
 void
 sys_mbox_free(sys_mbox_t *mbox)
 {
+  void *_tmp;
+  void **tmp = &_tmp;
   /* There should not be any messages waiting (if there are it is a bug).  If
      any are waiting, increment the mailbox error count. */
-#if RTOS_FREERTOS
-  if(uxQueueMessagesWaiting(mbox->queue) != 0) {
+#if RTOS_ECHRONOS
+  if( rtos_message_queue_try_get( mbox->queue, tmp ) ) {
 #endif /* RTOS_FREERTOS */
 
 #if SYS_STATS
@@ -488,8 +400,9 @@ sys_mbox_free(sys_mbox_t *mbox)
 #endif /* SYS_STATS */
   }
 
-  /* Clear the queue handle. */
-  mbox->queue = 0;
+  // Make sure no messages are left
+  while( rtos_message_queue_try_get( mbox->queue, tmp ) );
+  mbox->isUsed = false;
 
   /* Update the mailbox statistics. */
 #if SYS_STATS
@@ -506,7 +419,7 @@ int
 sys_mbox_valid(sys_mbox_t *mbox)
 {
   /*Check if a mailbox has been created*/
-  if(mbox->queue == SYS_MBOX_NULL){
+  if(!mbox->isUsed){
       return 0;
   }
   else{
@@ -514,118 +427,61 @@ sys_mbox_valid(sys_mbox_t *mbox)
   }
 }
 
+// TIMERS & CRITICAL SECTIONS
+// TODO: Test these work as expected
+// Currently using bare-metal implementation
+// (interrupt enabling is recommended in eChronos manual)
+
+/* TivaWare header files required for this interface driver. */
+#include <stdint.h>
+#include <stdbool.h>
+#include "inc/hw_types.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/rom.h"
+#include "driverlib/rom_map.h"
+
+//
+
 /**
- * The routine for a thread.  This handles some housekeeping around the
- * applications's thread routine.
- *
- * @param arg is the index into the thread structure for this thread
+ * This function returns the system time in milliseconds.
  */
-static void
-sys_arch_thread(void *arg)
+u32_t
+sys_now(void)
 {
-  u32_t i;
-
-  /* Get this threads index. */
-  i = (u32_t)arg;
-
-  /* Call the application's thread routine. */
-  threads[i].thread(threads[i].arg);
-
-  /* Free the memory used by this thread's stack. */
-  mem_free(threads[i].stackstart);
-
-  /* Clear the stack from the thread structure. */
-  threads[i].stackstart = NULL;
-  threads[i].stackend = NULL;
-
-  /* Delete this task. */
-#if RTOS_FREERTOS
-  vTaskDelete(NULL);
-#endif
+    return rtos_timer_current_ticks * SYS_TICK_INTERVAL;
 }
 
 /**
- * Creates a new thread.
+ * This function is used to lock access to critical sections when lwipopt.h
+ * defines SYS_LIGHTWEIGHT_PROT. It disables interrupts and returns a value
+ * indicating the interrupt enable state when the function entered. This
+ * value must be passed back on the matching call to sys_arch_unprotect().
  *
- * @param name is the name of this thread
- * @param thread is a pointer to the function to run in the new thread
- * @param arg is the argument to pass to the thread's function
- * @param stacksize is the size of the stack to allocate for this thread
- * @param prio is the priority of the new thread
- * @return the handle fo the created thread
- */
-sys_thread_t
-sys_thread_new(const char *name, lwip_thread_fn thread, void *arg,
-               int stacksize, int prio)
-{
-  sys_thread_t created_thread;
-  void *data;
-  u32_t i;
-
-  /* Find a thread that is not in use. */
-  for(i = 0; i < SYS_THREAD_MAX; i++) {
-    if(threads[i].stackstart == NULL) {
-      break;
-    }
-  }
-  if(i == SYS_THREAD_MAX) {
-      return NULL;
-  }
-
-  /* Allocate memory for the thread's stack. */
-  data = mem_malloc(stacksize);
-  if(!data) {
-    return NULL;
-  }
-
-  /* Save the details of this thread. */
-  threads[i].stackstart = data;
-  threads[i].stackend = (void *)((char *)data + stacksize);
-  threads[i].thread = thread;
-  threads[i].arg = arg;
-
-  /* Create a new thread. */
-#if RTOS_FREERTOS
-  if(xTaskCreate(sys_arch_thread, (signed portCHAR *)name,
-                 stacksize/sizeof(int), (void *)i, tskIDLE_PRIORITY+prio,
-                 &threads[i].taskhandle) != pdTRUE){
-    threads[i].stackstart = NULL;
-    threads[i].stackend = NULL;
-    return NULL;
-  }
-  created_thread = threads[i].taskhandle;
-#endif /* RTOS_FREERTOS */
-
-  /* Return this thread. */
-  return created_thread;
-}
-
-/**
- * Enters a critical section.
- *
- * @return the previous protection level
+ * @return the interrupt level when the function was entered.
  */
 sys_prot_t
 sys_arch_protect(void)
 {
-#if RTOS_FREERTOS
-  taskENTER_CRITICAL();
-#endif
-
-  return 1;
+  return((sys_prot_t)MAP_IntMasterDisable());
 }
 
 /**
- * Leaves a critical section.
+ * This function is used to unlock access to critical sections when lwipopt.h
+ * defines SYS_LIGHTWEIGHT_PROT. It enables interrupts if the value of the lev
+ * parameter indicates that they were enabled when the matching call to
+ * sys_arch_protect() was made.
  *
- * @param the preivous protection level
+ * @param lev is the interrupt level when the matching protect function was
+ * called
  */
 void
-sys_arch_unprotect(sys_prot_t val)
+sys_arch_unprotect(sys_prot_t lev)
 {
-#if RTOS_FREERTOS
-  taskEXIT_CRITICAL();
-#endif
+  /* Only turn interrupts back on if they were originally on when the matching
+     sys_arch_protect() call was made. */
+  if(!(lev & 1)) {
+    MAP_IntMasterEnable();
+  }
 }
 
 #endif /* NO_SYS */

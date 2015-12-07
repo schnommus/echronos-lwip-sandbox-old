@@ -2,7 +2,7 @@
 //
 // lwipopts.h - Configuration file for lwIP
 //
-// Copyright (c) 2013-2015 Texas Instruments Incorporated.  All rights reserved.
+// Copyright (c) 2008-2015 Texas Instruments Incorporated.  All rights reserved.
 // Software License Agreement
 // 
 // Texas Instruments (TI) is supplying this software for use solely and
@@ -29,35 +29,25 @@
 // documentation.
 //
 //*****************************************************************************
+
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
-
-#include <stdint.h>
-
-// NEW options
-
-// Systick interval in milliseconds
-#define SYS_TICK_INTERVAL 10
-
-// Maximum message queue size
-#define MBOX_MAX 64
 
 //*****************************************************************************
 //
 // ---------- Stellaris / lwIP Port Options ----------
 //
 //*****************************************************************************
-#define HOST_TMR_INTERVAL               10         // default is 0
-//#define DHCP_EXPIRE_TIMER_MSECS         (60 * 1000)
-//#define LWIP_HTTPD_SSI 1
-//#define LWIP_HTTPD_CGI 1
-#define LWIP_HTTPD_DYNAMIC_HEADERS 1
-//#define EMAC_PHY_CONFIG EMAC_PHY_TYPE_EXTERNAL_RMII
-//#define PHY_PHYS_ADDR      1
+#define HOST_TMR_INTERVAL               100         // default is 0
+#define DHCP_EXPIRE_TIMER_MSECS         (10 * 1000)
+#define LWIP_HTTPD_SSI                  1
+#define LWIP_HTTPD_CGI                  1
+#define LWIP_HTTPD_DYNAMIC_HEADERS      1
+//#define HTTPD_DEBUG                     LWIP_DBG_ON
 #define EMAC_PHY_CONFIG (EMAC_PHY_TYPE_INTERNAL | EMAC_PHY_INT_MDIX_EN |      \
                          EMAC_PHY_AN_100B_T_FULL_DUPLEX)
 #define PHY_PHYS_ADDR      0
-#define NUM_TX_DESCRIPTORS              8
+#define NUM_TX_DESCRIPTORS 24
 #define NUM_RX_DESCRIPTORS 8
 
 //*****************************************************************************
@@ -66,18 +56,18 @@
 //
 //*****************************************************************************
 
-//#define SYS_LIGHTWEIGHT_PROT            1           // default is 0
+#define SYS_LIGHTWEIGHT_PROT            1           // default is 0
 //#define NO_SYS                          1           // default is 0
 // ^^ (for bare-metal systems)
 //
 /* ECHRONOS */
-#define SYS_LIGHTWEIGHT_PROT            1           // default is 0
-#define LWIP_COMPAT_MUTEX               1
 #define NO_SYS                          0           // default is 0
 #define RTOS_ECHRONOS 1
 #define ECHRONOS_HEADER "rtos-kochab.h"
 /* */
 
+//#define MEMCPY(dst,src,len)             memcpy(dst,src,len)
+//#define SMEMCPY(dst,src,len)            memcpy(dst,src,len)
 
 //*****************************************************************************
 //
@@ -85,8 +75,8 @@
 //
 //*****************************************************************************
 //#define MEM_LIBC_MALLOC                 0
-#define MEM_ALIGNMENT                     4
-#define MEM_SIZE                          (32 * 1024)
+#define MEM_ALIGNMENT                   4           // default is 1
+#define MEM_SIZE                        (64 * 1024)  // default is 1600
 //#define MEMP_OVERFLOW_CHECK             0
 //#define MEMP_SANITY_CHECK               0
 //#define MEM_USE_POOLS                   0
@@ -97,21 +87,21 @@
 // ---------- Internal Memory Pool Sizes ----------
 //
 //*****************************************************************************
-#define MEMP_NUM_PBUF                     16    // Default 16, was 16
+#define MEMP_NUM_PBUF                     48    // Default 16
 //#define MEMP_NUM_RAW_PCB                4
 //#define MEMP_NUM_UDP_PCB                4
-#define MEMP_NUM_TCP_PCB                  40
+#define MEMP_NUM_TCP_PCB                  16    // Default 5
 //#define MEMP_NUM_TCP_PCB_LISTEN         8
-//#define MEMP_NUM_TCP_SEG                16
+#define MEMP_NUM_TCP_SEG                  32  // Default 16
 //#define MEMP_NUM_REASSDATA              5
 //#define MEMP_NUM_ARP_QUEUE              30
 //#define MEMP_NUM_IGMP_GROUP             8
-#define MEMP_NUM_SYS_TIMEOUT              10 //5
+#define MEMP_NUM_SYS_TIMEOUT              8
 //#define MEMP_NUM_NETBUF                 2
 //#define MEMP_NUM_NETCONN                4
 //#define MEMP_NUM_TCPIP_MSG_API          8
 //#define MEMP_NUM_TCPIP_MSG_INPKT        8
-#define PBUF_POOL_SIZE                    64    // Default 16
+#define PBUF_POOL_SIZE                    48    // Default 16
 
 //*****************************************************************************
 //
@@ -209,13 +199,13 @@
 // ---------- DNS options -----------
 //
 //*****************************************************************************
-#define LWIP_DNS                        1
-#define DNS_TABLE_SIZE                  4
-#define DNS_MAX_NAME_LENGTH             256
-#define DNS_MAX_SERVERS                 2
-#define DNS_DOES_NAME_CHECK             1
-#define DNS_USES_STATIC_BUF             1
-#define DNS_MSG_SIZE                    512
+//#define LWIP_DNS                        0
+//#define DNS_TABLE_SIZE                  4
+//#define DNS_MAX_NAME_LENGTH             256
+//#define DNS_MAX_SERVERS                 2
+//#define DNS_DOES_NAME_CHECK             1
+//#define DNS_USES_STATIC_BUF             1
+//#define DNS_MSG_SIZE                    512
 
 //*****************************************************************************
 //
@@ -231,7 +221,7 @@
 // ---------- TCP options ----------
 //
 //*****************************************************************************
-#define LWIP_TCP                        1
+//#define LWIP_TCP                        1
 //#define TCP_TTL                         (IP_DEFAULT_TTL)
 #define TCP_WND                         4096   // default is 2048
 //#define TCP_MAXRTX                      12
@@ -239,8 +229,8 @@
 //#define TCP_QUEUE_OOSEQ                 1
 #define TCP_MSS                        1500        // default is 128
 //#define TCP_CALCULATE_EFF_SEND_MSS      1
-#define TCP_SND_BUF                     (4 * TCP_MSS)
-                                                    // default is 256, was 6 *
+#define TCP_SND_BUF                     (6 * TCP_MSS)
+                                                    // default is 256
 //#define TCP_SND_QUEUELEN                (4 * (TCP_SND_BUF/TCP_MSS))
 //#define TCP_SNDLOWAT                    (TCP_SND_BUF/2)
 //#define TCP_LISTEN_BACKLOG              0
@@ -288,10 +278,10 @@
 // ---------- Thread options ----------
 //
 //*****************************************************************************
-#define TCPIP_THREAD_NAME              "tcpip"
-#define TCPIP_THREAD_STACKSIZE          2048
-#define TCPIP_THREAD_PRIO               14
-#define TCPIP_MBOX_SIZE                 32
+//#define TCPIP_THREAD_NAME              "tcpip_thread"
+//#define TCPIP_THREAD_STACKSIZE          0
+//#define TCPIP_THREAD_PRIO               1
+//#define TCPIP_MBOX_SIZE                 0
 //#define SLIPIF_THREAD_NAME             "slipif_loop"
 //#define SLIPIF_THREAD_STACKSIZE         0
 //#define SLIPIF_THREAD_PRIO              1
@@ -312,7 +302,7 @@
 //
 //*****************************************************************************
 //#define LWIP_TCPIP_CORE_LOCKING         0
-#define LWIP_NETCONN                    0          // default is 1
+#define LWIP_NETCONN                    0           // default is 1
 
 //*****************************************************************************
 //
@@ -385,23 +375,22 @@
 // ---------- checksum options ----------
 //
 //*****************************************************************************
-#define CHECKSUM_GEN_IP                 0
-#define CHECKSUM_GEN_ICMP               0
-#define CHECKSUM_GEN_UDP                0
-#define CHECKSUM_GEN_TCP                0
-#define CHECKSUM_CHECK_IP               0
-#define CHECKSUM_CHECK_UDP              0
-#define CHECKSUM_CHECK_TCP              0
+//#define CHECKSUM_GEN_IP                 1
+//#define CHECKSUM_GEN_UDP                1
+//#define CHECKSUM_GEN_TCP                1
+//#define CHECKSUM_CHECK_IP               1
+//#define CHECKSUM_CHECK_UDP              1
+//#define CHECKSUM_CHECK_TCP              1
 
 //*****************************************************************************
 //
 // ---------- Debugging options ----------
 //
 //*****************************************************************************
-#ifdef DEBUG
+#if 0
 #define U8_F "c"
 #define S8_F "c"
-#define X8_F "02x"
+#define X8_F "x"
 #define U16_F "u"
 #define S16_F "d"
 #define X16_F "x"
@@ -409,10 +398,7 @@
 #define S32_F "d"
 #define X32_F "x"
 extern void UARTprintf(const char *pcString, ...);
-#define LWIP_PLATFORM_DIAG(msg) UARTprintf msg
-#define LWIP_PLATFORM_ASSERT(msg)                                             \
-    UARTprintf("ASSERT FAIL at line %d of %s: %s\n", __LINE__, __FILE__, msg)
-#define LWIP_DEBUG 1
+#define LWIP_DEBUG
 #endif
 
 //#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_OFF
@@ -422,36 +408,35 @@ extern void UARTprintf(const char *pcString, ...);
 //#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_SEVERE
 
 //#define LWIP_DBG_TYPES_ON               LWIP_DBG_ON
-//#define LWIP_DBG_TYPES_ON               (LWIP_DBG_ON|LWIP_DBG_TRACE|        
-//                                           LWIP_DBG_STATE|LWIP_DBG_FRESH)
+#define LWIP_DBG_TYPES_ON               (LWIP_DBG_ON|LWIP_DBG_TRACE|          \
+                                         LWIP_DBG_STATE|LWIP_DBG_FRESH)
 
 //#define ETHARP_DEBUG                    LWIP_DBG_ON     // default is OFF
-#define NETIF_DEBUG                     LWIP_DBG_OFF
+//#define NETIF_DEBUG                     LWIP_DBG_ON     // default is OFF
 //#define PBUF_DEBUG                      LWIP_DBG_OFF
 //#define API_LIB_DEBUG                   LWIP_DBG_OFF
 //#define API_MSG_DEBUG                   LWIP_DBG_OFF
 //#define SOCKETS_DEBUG                   LWIP_DBG_OFF
-#define HTTPD_DEBUG                     LWIP_DBG_OFF
 //#define ICMP_DEBUG                      LWIP_DBG_OFF
 //#define IGMP_DEBUG                      LWIP_DBG_OFF
 //#define INET_DEBUG                      LWIP_DBG_OFF
-//#define IP_DEBUG                        LWIP_DBG_ON
+//#define IP_DEBUG                        LWIP_DBG_ON     // default is OFF
 //#define IP_REASS_DEBUG                  LWIP_DBG_OFF
-#define RAW_DEBUG                       LWIP_DBG_OFF
+//#define RAW_DEBUG                       LWIP_DBG_OFF
 //#define MEM_DEBUG                       LWIP_DBG_OFF
 //#define MEMP_DEBUG                      LWIP_DBG_OFF
 //#define SYS_DEBUG                       LWIP_DBG_OFF
-//#define TCP_DEBUG                       LWIP_DBG_ON
-#define TCP_INPUT_DEBUG                 LWIP_DBG_OFF
+//#define TCP_DEBUG                       LWIP_DBG_OFF
+//#define TCP_INPUT_DEBUG                 LWIP_DBG_OFF
 //#define TCP_FR_DEBUG                    LWIP_DBG_OFF
 //#define TCP_RTO_DEBUG                   LWIP_DBG_OFF
 //#define TCP_CWND_DEBUG                  LWIP_DBG_OFF
 //#define TCP_WND_DEBUG                   LWIP_DBG_OFF
-#define TCP_OUTPUT_DEBUG                LWIP_DBG_OFF
+//#define TCP_OUTPUT_DEBUG                LWIP_DBG_OFF
 //#define TCP_RST_DEBUG                   LWIP_DBG_OFF
 //#define TCP_QLEN_DEBUG                  LWIP_DBG_OFF
 //#define UDP_DEBUG                       LWIP_DBG_ON     // default is OFF
-//#define TCPIP_DEBUG                     LWIP_DBG_ON
+//#define TCPIP_DEBUG                     LWIP_DBG_OFF
 //#define PPP_DEBUG                       LWIP_DBG_OFF
 //#define SLIP_DEBUG                      LWIP_DBG_OFF
 //#define DHCP_DEBUG                      LWIP_DBG_ON     // default is OFF

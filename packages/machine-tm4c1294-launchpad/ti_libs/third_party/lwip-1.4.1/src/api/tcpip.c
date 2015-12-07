@@ -70,11 +70,12 @@ sys_mutex_t lock_tcpip_core;
  *
  * @param arg unused argument
  */
-static void
-tcpip_thread(void *arg)
+void
+tcpip_thread(void)
 {
+  rtos_signal_wait( RTOS_SIGNAL_ID_START_TCPIP_THREAD );
+
   struct tcpip_msg *msg;
-  LWIP_UNUSED_ARG(arg);
 
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
@@ -466,8 +467,10 @@ tcpip_init(tcpip_init_done_fn initfunc, void *arg)
     LWIP_ASSERT("failed to create lock_tcpip_core", 0);
   }
 #endif /* LWIP_TCPIP_CORE_LOCKING */
-
-  sys_thread_new(TCPIP_THREAD_NAME, tcpip_thread, NULL, TCPIP_THREAD_STACKSIZE, TCPIP_THREAD_PRIO);
+  
+  // START TCP THREAD
+  //sys_thread_new(TCPIP_THREAD_NAME, tcpip_thread, NULL, TCPIP_THREAD_STACKSIZE, TCPIP_THREAD_PRIO);
+  rtos_signal_send( RTOS_TASK_ID_TCPIP_THREAD, RTOS_SIGNAL_ID_START_TCPIP_THREAD );
 }
 
 /**
