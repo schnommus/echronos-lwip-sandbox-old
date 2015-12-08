@@ -27,142 +27,156 @@
   -->
 
 <system>
-  <modules>
-    <module name="machine-tm4c1294-launchpad.build" />
+    <modules>
+        <module name="machine-tm4c1294-launchpad.build" />
 
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.adc"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.aes"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.can"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.comp"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.cpu"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.crc"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.des"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.eeprom"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.emac"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.epi"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.flash"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.fpu"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.gpio"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.i2c"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.interrupt"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.lcd"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.mpu"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.onewire"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.pwm"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.qei"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.shamd5"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.ssi"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.sw_crc"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.sysctl"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.sysexc"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.systick"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.timer"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.uart"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.udma"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.usb"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.watchdog"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.adc"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.aes"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.can"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.comp"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.cpu"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.crc"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.des"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.eeprom"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.emac"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.epi"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.flash"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.fpu"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.gpio"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.i2c"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.interrupt"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.lcd"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.mpu"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.onewire"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.pwm"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.qei"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.shamd5"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.ssi"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.sw_crc"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.sysctl"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.sysexc"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.systick"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.timer"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.uart"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.udma"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.usb"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.watchdog"/>
 
-    <module name="machine-tm4c1294-launchpad.ti_libs.utils.uartstdio"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.utils.ustdlib"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.utils.lwiplib"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.utils.locator"/>
-    <module name="machine-tm4c1294-launchpad.ti_libs.examples.boards.ek-tm4c1294xl.drivers.pinout"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.utils.uartstdio"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.utils.ustdlib"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.utils.lwiplib"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.utils.locator"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.examples.boards.ek-tm4c1294xl.drivers.pinout"/>
 
-    <module name="machine-tm4c1294-launchpad.armv7m_ti.ctxt-switch-preempt" />
-    <module name="machine-tm4c1294-launchpad.armv7m_ti.exception-preempt">
-      <trampolines>
-        <trampoline>
-          <name>systick</name>
-          <handler>tick_irq</handler>
-        </trampoline>
-      </trampolines>
-    </module>
-    <module name="machine-tm4c1294-launchpad.armv7m_ti.vectable">
-      <flash_load_addr>0x0000000</flash_load_addr>
-      <preemption>true</preemption>
-      <systick>exception_preempt_trampoline_systick</systick>
-      <nmi>nmi</nmi>
-      <hardfault>hardfault</hardfault>
-      <memmanage>memmanage</memmanage>
-      <usagefault>usagefault</usagefault>
-    </module>
+        <module name="machine-tm4c1294-launchpad.armv7m_ti.ctxt-switch-preempt" />
 
-    <module name="machine-tm4c1294-launchpad.armv7m_ti.rtos-kochab-messagequeue">
-      <api_asserts>true</api_asserts>
-      <internal_asserts>true</internal_asserts>
-      <fatal_error>fatal</fatal_error>
-      <prefix>rtos</prefix>
-      <taskid_size>8</taskid_size>
-      <signalset_size>8</signalset_size>
-      <tasks>
+        <module name="machine-tm4c1294-launchpad.armv7m_ti.exception-preempt">
+            <trampolines>
+                <trampoline>
+                    <name>systick</name>
+                    <handler>tick_irq</handler>
+                </trampoline>
+            </trampolines>
+        </module>
 
-        <!-- Priority convention: 
+        <module name="machine-tm4c1294-launchpad.armv7m_ti.vectable">
+            <flash_load_addr>0x0000000</flash_load_addr>
+            <preemption>true</preemption>
+            <systick>exception_preempt_trampoline_systick</systick>
+            <nmi>nmi</nmi>
+            <hardfault>hardfault</hardfault>
+            <memmanage>memmanage</memmanage>
+            <usagefault>usagefault</usagefault>
+
+            <external_irqs>
+                <external_irq>
+                    <number>40</number>
+                    <handler>lwIPEthernetIntHandler</handler>
+                </external_irq>
+            </external_irqs>
+        </module>
+
+        <module name="machine-tm4c1294-launchpad.armv7m_ti.rtos-kochab-messagequeue">
+            <api_asserts>true</api_asserts>
+            <internal_asserts>true</internal_asserts>
+            <fatal_error>fatal</fatal_error>
+            <prefix>rtos</prefix>
+            <taskid_size>8</taskid_size>
+            <signalset_size>8</signalset_size>
+            <tasks>
+
+                <!-- Priority convention: 
              1 is idle priority -->
 
+        <!--
         <task>
-          <name>a</name>
-          <function>fn_a</function>
-          <priority>30</priority>
-          <stack_size>8192</stack_size>
+            <name>a</name>
+            <function>fn_a</function>
+            <priority>30</priority>
+            <stack_size>8192</stack_size>
         </task>
 
         <task>
-          <name>b</name>
-          <function>fn_b</function>
-          <priority>10</priority>
-          <stack_size>8192</stack_size>
+            <name>b</name>
+            <function>fn_b</function>
+            <priority>10</priority>
+            <stack_size>8192</stack_size>
+        </task>
+        -->
+
+        <task>
+            <name>tcpip_thread</name>
+            <function>tcpip_thread</function>
+            <priority>14</priority>
+            <stack_size>8192</stack_size>
         </task>
 
         <task>
-          <name>tcpip_thread</name>
-          <function>tcpip_thread</function>
-          <priority>14</priority>
-          <stack_size>8192</stack_size>
+            <name>ethernet_interrupt_task</name>
+            <function>ethernet_interrupt_task</function>
+            <priority>2</priority>
+            <stack_size>8192</stack_size>
         </task>
 
-        <task>
-          <name>ethernet_interrupt_task</name>
-          <function>ethernet_interrupt_task</function>
-          <priority>2</priority>
-          <stack_size>8192</stack_size>
-        </task>
+    </tasks>
 
-      </tasks>
-
-      <signal_labels>
+    <signal_labels>
 
         <signal_label>
-          <name>timer</name>
+            <name>timer</name>
         </signal_label>
 
         <signal_label>
-          <name>test</name>
+            <name>test</name>
         </signal_label>
 
         <signal_label>
-          <name>start_tcpip_thread</name>
+            <name>start_tcpip_thread</name>
         </signal_label>
 
-      </signal_labels>
+        <signal_label>
+            <name>trigger_ethernet_interrupt</name>
+        </signal_label>
 
-      <interrupt_events>
+    </signal_labels>
+
+    <interrupt_events>
         <interrupt_event>
-          <name>tick</name>
-          <task>a</task>
-          <sig_set>timer</sig_set>
+            <name>ethernet_interrupt</name>
+            <task>ethernet_interrupt_task</task>
+            <sig_set>trigger_ethernet_interrupt</sig_set>
         </interrupt_event>
+    </interrupt_events>
 
-      </interrupt_events>
-
-      <mutexes>
+    <mutexes>
         <mutex>
-          <name>m0</name>
+            <name>m0</name>
         </mutex>
-      </mutexes>
-      <mutex>
+    </mutexes>
+    <mutex>
         <stats>false</stats>
-      </mutex>
-      <!--
+    </mutex>
+    <!--
       <message_queues>
           <message_queue>
               <name>example_queue</name>
@@ -219,9 +233,13 @@
         </semaphore>
     </semaphores>
 
-    </module>
+</module>
 
-    <module name="machine-tm4c1294-launchpad.src.kochab-ethernet"/>
+<module name="machine-tm4c1294-launchpad.src.kochab-ethernet"/>
+<module name="machine-tm4c1294-launchpad.src.httpserver_raw.httpd"/>
+<module name="machine-tm4c1294-launchpad.src.httpserver_raw.fs"/>
+<!--<module name="machine-tm4c1294-launchpad.src.eth_client_lwip"/>
+<module name="machine-tm4c1294-launchpad.src.http"/>-->
 
   </modules>
 </system>

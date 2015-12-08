@@ -371,6 +371,8 @@ static uint32_t g_ui32NetMask;
 //*****************************************************************************
 static uint32_t g_ui32GWAddr;
 
+
+static uint32_t ui32EthernetStatus;
 //*****************************************************************************
 //
 // The stack size for the interrupt task.
@@ -398,8 +400,12 @@ ethernet_interrupt_task()
         //
         // Wait until the semaphore has been signaled.
         //
-        uint32_t ui32Status;
-        rtos_message_queue_get( RTOS_MESSAGE_QUEUE_ID_LWIP_ETHERNET_QUEUE, &ui32Status ); 
+        rtos_signal_wait( RTOS_SIGNAL_ID_TRIGGER_ETHERNET_INTERRUPT );
+
+        //TODO: This is potentially dangerous. I don't think ethernet interrupts occor
+        // often enough for this to be an issue though.
+        // (The issue is that the ethernet interrupt could be writing this while we read it.)
+        uint32_t ui32Status = ui32EthernetStatus;
 
         //
         // Processes any packets waiting to be sent or received.
@@ -975,6 +981,7 @@ lwIPTimer(uint32_t ui32TimeMS)
 void
 lwIPEthernetIntHandler(void)
 {
+
     uint32_t ui32Status;
     uint32_t ui32TimerStatus;
 
@@ -1032,7 +1039,8 @@ lwIPEthernetIntHandler(void)
     //
     // A RTOS is being used.  Signal the Ethernet interrupt task.
     //
-    rtos_message_queue_put( RTOS_MESSAGE_QUEUE_ID_LWIP_ETHERNET_QUEUE, &ui32Status ); 
+    ui32EthernetStatus = ui32Status;
+    rtos_interrupt_event_raise( RTOS_INTERRUPT_EVENT_ID_ETHERNET_INTERRUPT ); 
 
     //
     // Disable the Ethernet interrupts.  Since the interrupts have not been

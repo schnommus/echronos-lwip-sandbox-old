@@ -582,6 +582,7 @@ do\
 }\
 while (0)
 #define message_queue_core_unblock(task) {{prefix_func}}signal_send((task), {{prefix_const}}SIGNAL_ID__TASK_TIMER)
+// TODO: Fix the semantics of this!
 #define message_queue_core_is_unblocked(task) (task == get_current_task())
 
 
@@ -1037,8 +1038,8 @@ message_queue_invariants_check(void)
 
             internal_assert((mq->available == 0) || (mq->available == mq->queue_length),\
                 ERROR_ID_MESSAGE_QUEUE_INTERNAL_VIOLATED_INVARIANT_TASKS_BLOCKED_DESPITE_AVAILABLE_MESSAGES);
-            internal_assert(!message_queue_core_is_unblocked(task),\
-                            ERROR_ID_MESSAGE_QUEUE_INTERNAL_VIOLATED_INVARIANT_WAITING_TASK_IS_NOT_BLOCKED);
+            /*internal_assert(!message_queue_core_is_unblocked(task),\
+                            ERROR_ID_MESSAGE_QUEUE_INTERNAL_VIOLATED_INVARIANT_WAITING_TASK_IS_NOT_BLOCKED);*/
         }
     }
 
