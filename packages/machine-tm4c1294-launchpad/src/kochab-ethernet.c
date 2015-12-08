@@ -95,7 +95,6 @@ ConfigureUART(void)
 }
 
 bool tick_irq(void) {
-    //Do nothing
     rtos_timer_tick();
     return true;
 }
@@ -186,15 +185,11 @@ DisplayIPAddress(uint32_t ui32Addr)
 {
     char pcBuf[16];
 
-    //
     // Convert the IP Address into a string.
-    //
     usprintf(pcBuf, "%d.%d.%d.%d", ui32Addr & 0xff, (ui32Addr >> 8) & 0xff,
             (ui32Addr >> 16) & 0xff, (ui32Addr >> 24) & 0xff);
 
-    //
     // Display the string.
-    //
     UARTprintf(pcBuf);
 }
 
@@ -203,60 +198,42 @@ lwIPHostTimerHandler(void)
 {
     uint32_t ui32NewIPAddress;
 
-    //
     // Get the current IP address.
-    //
     ui32NewIPAddress = lwIPLocalIPAddrGet();
 
 
-    //
     // See if the IP address has changed.
-    //
     if(ui32NewIPAddress != g_ui32IPAddress)
     {
-        //
         // See if there is an IP address assigned.
-        //
         if(ui32NewIPAddress == 0xffffffff)
         {
-            //
             // Indicate that there is no link.
-            //
             UARTprintf("Waiting for link.\n");
         }
         else if(ui32NewIPAddress == 0)
         {
-            //
             // There is no IP address, so indicate that the DHCP process is
             // running.
-            //
             UARTprintf("Waiting for IP address.\n");
         }
         else
         {
-            //
             // Display the new IP address.
-            //
             UARTprintf("IP Address: ");
             DisplayIPAddress(ui32NewIPAddress);
             UARTprintf("\n");
             UARTprintf("Open a browser and enter the IP address.\n");
         }
 
-        //
         // Save the new IP address.
-        //
         g_ui32IPAddress = ui32NewIPAddress;
     }
 
-    //
     // If there is not an IP address.
-    //
     if((ui32NewIPAddress == 0) || (ui32NewIPAddress == 0xffffffff))
     {
-       //
        // Do nothing and keep waiting.
-       //
     }
 }
 
