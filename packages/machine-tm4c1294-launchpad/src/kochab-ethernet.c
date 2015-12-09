@@ -47,6 +47,8 @@
 
 #include "rtos-kochab.h"
 
+#include "telnet.h"
+
 #define debug_println(text) UARTprintf(text);UARTprintf("\n")
 
 #define SYSTICK_INT_PRIORITY    0x80
@@ -67,6 +69,20 @@ void usagefault() { for(;;); }
 
 uint32_t g_ui32SysClock;
 uint32_t g_ui32IPAddress;
+
+
+void relays_on() {
+    // Note the relays are active-low!
+    ROM_GPIOPinWrite(GPIO_PORTK_BASE, GPIO_PIN_6, 0);
+    ROM_GPIOPinWrite(GPIO_PORTK_BASE, GPIO_PIN_7, 0);
+}
+
+
+void relays_off() {
+    ROM_GPIOPinWrite(GPIO_PORTK_BASE, GPIO_PIN_6, 0xFF);
+    ROM_GPIOPinWrite(GPIO_PORTK_BASE, GPIO_PIN_7, 0xFF);
+}
+
 
 void
 ConfigureUART(void)
@@ -108,77 +124,6 @@ fatal(const RtosErrorId error_id)
     {
     }
 }
-
-static char* aMessage = "This is a message!";
-
-/*
-void
-fn_a(void)
-{
-    uint8_t count;
-
-    UARTprintf( "Task A: sleeping for 10000 ticks" );
-    rtos_sleep( 10000 );
-
-    debug_println("task a: taking lock");
-    rtos_mutex_lock(RTOS_MUTEX_ID_M0);
-    if (rtos_mutex_try_lock(RTOS_MUTEX_ID_M0))
-    {
-        debug_println("unexpected mutex not locked.");
-    }
-    debug_println("task a: releasing lock");
-    rtos_mutex_unlock(RTOS_MUTEX_ID_M0);
-
-    for (count = 0; count < 10; count++)
-    {
-        debug_println("task a");
-        if (count % 5 == 0)
-        {
-            debug_println("unblocking b");
-            rtos_signal_send_set(RTOS_TASK_ID_B, RTOS_SIGNAL_SET_TEST);
-        }
-    }
-
-
-    debug_println("Task A: Posting a message...");
-
-    rtos_message_queue_put( RTOS_MESSAGE_QUEUE_ID_TEST_QUEUE, &aMessage );
-
-    debug_println("A now waiting for ticks");
-    for (;;)
-    {
-
-        (void) rtos_signal_wait_set(RTOS_SIGNAL_SET_TIMER);
-        debug_println("tick");
-        rtos_signal_send_set(RTOS_TASK_ID_B, RTOS_SIGNAL_SET_TEST);
-    }
-}
-
-void
-fn_b(void)
-{
-    UARTprintf( "Task B: sleeping for 10000 ticks" );
-    rtos_sleep( 10000 );
-    
-    debug_println("task b: attempting lock");
-    rtos_mutex_lock(RTOS_MUTEX_ID_M0);
-    debug_println("task b: got lock");
-
-    while (1) {
-        if (rtos_signal_poll_set(RTOS_SIGNAL_SET_TEST)) {
-            debug_println("task b blocking");
-            (void) rtos_signal_wait_set(RTOS_SIGNAL_SET_TEST);
-            debug_println("task b unblocked");
-        }
-
-
-        void *theMessage;
-        if( rtos_message_queue_try_get( RTOS_MESSAGE_QUEUE_ID_TEST_QUEUE, &theMessage ) ) {
-            UARTprintf("Task B: Got a message! It's: %s\n", theMessage);
-        }
-    }
-}
-*/
 
 void
 DisplayIPAddress(uint32_t ui32Addr)
@@ -298,6 +243,9 @@ main(void)
     // Initialize a sample httpd server.
     httpd_init();
 
+    // Initialize the telnet server
+    telnet_init();
+
     // Set the interrupt priorities.  We set the SysTick interrupt to a higher
     // priority than the Ethernet interrupt to ensure that the file system
     // tick is processed if SysTick occurs while the Ethernet handler is being
@@ -306,6 +254,12 @@ main(void)
     MAP_IntPrioritySet(INT_EMAC0, ETHERNET_INT_PRIORITY);
     MAP_IntPrioritySet(FAULT_SYSTICK, SYSTICK_INT_PRIORITY);
 
+    // Configure the relay control pins as outputs
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTK_BASE, GPIO_PIN_6);
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTK_BASE, GPIO_PIN_7);
+    
+    // Turn them off initially
+    relays_off();
 
     rtos_start();
 
