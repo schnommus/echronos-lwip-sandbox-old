@@ -1,6 +1,6 @@
 #ifndef __TELNET_H__
 #define __TELNET_H__
 
-void telnet_init(void);
+void telnet_command_init(int port);
 
 #endif /* __TELNET_H__ */

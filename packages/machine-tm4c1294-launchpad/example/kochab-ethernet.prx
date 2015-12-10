@@ -55,6 +55,10 @@
                     <number>40</number>
                     <handler>lwIPEthernetIntHandler</handler>
                 </external_irq>
+                <external_irq>
+                    <number>59</number>
+                    <handler>buffer_uart_interrupt</handler>
+                </external_irq>
             </external_irqs>
         </module>
 
@@ -158,7 +162,8 @@
         <module name="machine-tm4c1294-launchpad.src.kochab-ethernet"/>
         <module name="machine-tm4c1294-launchpad.src.httpserver_raw.httpd"/>
         <module name="machine-tm4c1294-launchpad.src.httpserver_raw.fs"/>
-        <module name="machine-tm4c1294-launchpad.src.telnet"/>
+        <module name="machine-tm4c1294-launchpad.src.telnet_command"/>
+        <module name="machine-tm4c1294-launchpad.src.telnet_uart_echo"/>
 
         <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.adc"/>
         <module name="machine-tm4c1294-launchpad.ti_libs.driverlib.aes"/>

@@ -1,12 +1,27 @@
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "lwip/debug.h"
 #include "lwip/stats.h"
 #include "lwip/tcp.h"
 
 #include "utils/uartstdio.h"
 #include "utils/ustdlib.h"
+#include "inc/hw_ints.h"
+#include "inc/hw_memmap.h"
+#include "driverlib/debug.h"
+#include "driverlib/gpio.h"
+#include "driverlib/interrupt.h"
+#include "driverlib/pin_map.h"
+#include "driverlib/rom.h"
+#include "driverlib/rom_map.h"
+#include "driverlib/sysctl.h"
+#include "driverlib/uart.h"
 
 #include <string.h>
-#include "telnet.h"
+#include "telnet_uart_echo.h"
+
+#include "system_status.h"
 
 
 #define TELNET_IAC   255
@@ -15,6 +30,7 @@
 #define TELNET_DO    253
 #define TELNET_DONT  254
 
+//#define TIMEOUT_DISCONNECT
 #define IDLE_TIMEOUT    30      // 30 seconds
 
 struct telnet_state {
@@ -34,65 +50,9 @@ struct telnet_state {
 #define STATE_CLOSE  6
 };
 
+extern uint32_t g_ui32SysClock;
 
 char tstr[2000];
-char *prompt = "\r\neChronos Launchpad >> ";
-
-extern void relays_on();
-extern void relays_off();
-
-// telnet command handler
-void cmd_parser(struct telnet_state *hs)
-{
-    char *p = hs->cmd_buffer;
-
-    if (strstr(p, "quit"))
-    {
-        hs->left = 0;
-        hs->flags |= TELNET_FLAG_CLOSE_CONNECTION;
-    }
-    else if( strstr(p, "help") )
-    {
-        usprintf(tstr,"\r\n"
-            "== COMMAND LIST ==\r\n"
-            " 'quit' - Exit the telnet session\r\n"
-            " 'help' - Show this message\r\n"
-            " 'poweron' - Switch ON the +5v, +12v rails\r\n"
-            " 'poweroff' - Switch OFF the +5v, +12v rails\r\n"
-            "%s",prompt);
-
-        hs->data_out = tstr;
-        hs->left = strlen(hs->data_out);
-    }
-    else if( strstr(p, "poweron") )
-    {
-        relays_on();
-        usprintf(tstr,"\r\n"
-            "+5v, +12v rails have been switched ON\r\n"
-            "%s",prompt);
-        hs->data_out = tstr;
-        hs->left = strlen(hs->data_out);
-    }
-    else if( strstr(p, "poweroff") )
-    {
-        relays_off();
-        usprintf(tstr,"\r\n"
-            "+5v, +12v rails have been switched OFF\r\n"
-            "%s",prompt);
-        hs->data_out = tstr;
-        hs->left = strlen(hs->data_out);
-    }
-    else
-    {
-        usprintf(tstr,"\r\nThis command isn't implemented. Echoing: \"%s\"\r\n%s",p,prompt);
-        hs->data_out = tstr;
-        hs->left = strlen(hs->data_out);
-    }
-
-    hs->cmd_buffer[0] = 0;
-    // copy any remaining part of command line to position 0
-    //strcpy(hs->cmd_buffer,q+1);
-}
 
 static void conn_err(void *arg, err_t err)
 {
@@ -137,17 +97,61 @@ static void send_data(struct tcp_pcb *pcb, struct telnet_state *hs)
     }
 }
 
+#define UART_BUFFER_SIZE 4096
+
+char uart_buffer[UART_BUFFER_SIZE];
+char uart_buffer_to_send[UART_BUFFER_SIZE];
+int uart_buffer_index = 0;
+
+void buffer_uart_interrupt() {
+
+    uint32_t ui32Status;
+
+    ui32Status = ROM_UARTIntStatus(UART6_BASE, true);
+
+    // Clear the asserted interrupts.
+    ROM_UARTIntClear(UART6_BASE, ui32Status);
+
+
+    while( UARTCharsAvail( UART6_BASE ) ) {
+
+        // Silently fail a buffer overflow case (only transmit what was possible)
+        if( uart_buffer_index == UART_BUFFER_SIZE ) {
+            UARTprintf( "External UART - buffer exceeded %i bytes before TCP poll! Truncated.", UART_BUFFER_SIZE );
+            break;
+        }
+
+        char c = UARTCharGetNonBlocking( UART6_BASE );
+        uart_buffer[uart_buffer_index++] = c;
+    }
+}
+
 static err_t telnet_poll(void *arg, struct tcp_pcb *pcb)
 {
     struct telnet_state *hs;
 
     hs = arg;
 
-    UARTprintf("Poll\n");
     if (hs == NULL) {
         tcp_abort(pcb);
         return ERR_ABRT;
     } else {
+
+        if( uart_buffer_index != 0 ) {
+            ROM_IntDisable(INT_UART6);
+
+            memcpy( uart_buffer_to_send, uart_buffer, UART_BUFFER_SIZE );
+
+            hs->left = uart_buffer_index;
+            hs->data_out = uart_buffer_to_send;
+
+            uart_buffer_index = 0;
+
+            ROM_IntEnable(INT_UART6);
+            ROM_UARTIntEnable(UART6_BASE, UART_INT_RX | UART_INT_RT);
+
+            send_data(pcb, hs);
+        }
 
         if (hs->flags & TELNET_FLAG_CLOSE_CONNECTION) {
             UARTprintf("closing connection in poll\n");
@@ -155,10 +159,14 @@ static err_t telnet_poll(void *arg, struct tcp_pcb *pcb)
             hs->flags &= ~TELNET_FLAG_CLOSE_CONNECTION;
         }
 
+#ifdef TIMEOUT_DISCONNECT
         // timeout and close connection if nothing has been received for N seconds
         hs->timeout++;
-        if (hs->timeout > IDLE_TIMEOUT)
+        if (hs->timeout > IDLE_TIMEOUT) {
+            UARTprintf("client timed out - disconnecting");
             close_conn(pcb,hs);
+        }
+#endif
     }
 
     return ERR_OK;
@@ -185,7 +193,7 @@ static err_t telnet_sent(void *arg, struct tcp_pcb *pcb, u16_t len)
     return ERR_OK;
 }
 
-void sendopt(struct telnet_state *hs, u8_t option, u8_t value)
+static void sendopt(struct telnet_state *hs, u8_t option, u8_t value)
 {
     hs->data_out[hs->left++] = TELNET_IAC;
     hs->data_out[hs->left++] = option;
@@ -193,33 +201,15 @@ void sendopt(struct telnet_state *hs, u8_t option, u8_t value)
     hs->data_out[hs->left] = 0;
 }
 
-void get_char(struct tcp_pcb *pcb, struct telnet_state *hs, char c)
+static void get_char(struct tcp_pcb *pcb, struct telnet_state *hs, char c)
 {
-    int l;
-
-    if (c == '\r') return;
-    if (c != '\n')
-    {
-        l = strlen(hs->cmd_buffer);
-        hs->cmd_buffer[l++] = c;
-        hs->cmd_buffer[l] = 0;
-    }
-    else
-    {
-        cmd_parser(hs);     // handle command
-        if (hs->left > 0)
-        {
-            send_data(pcb, hs);
-            tcp_sent(pcb, telnet_sent);
-        }
-    }
+    UARTCharPut( UART6_BASE, c );
 }
 
 static err_t telnet_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 {
     struct telnet_state *hs;
 
-    // TODO: Changed to unsigned - make sure this is correct
     unsigned char *q,c;
     int len;
 
@@ -242,8 +232,8 @@ static err_t telnet_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t e
             switch (hs->state) {
                 case STATE_IAC:
                     if(c == TELNET_IAC) {
-                        get_char(pcb,hs,c);
                         hs->state = STATE_NORMAL;
+                        get_char(pcb,hs,c);
                     } else {
                         switch(c) {
                             case TELNET_WILL:
@@ -295,22 +285,7 @@ static err_t telnet_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t e
             }
         }
 
-        //! \todo should check max length here
-//      strcat(hs->cmd_buffer,p->payload);
-
         pbuf_free(p);
-/*
-        if (strchr(hs->cmd_buffer,'\r'))
-        {
-            cmd_parser(hs);     // handle command
-
-            send_data(pcb, hs);
-
-            // Tell TCP that we wish be to informed of data that has been
-            // successfully sent by a call to the http_sent() function.
-            tcp_sent(pcb, telnet_sent);
-        }
-*/
 
     }
 
@@ -360,11 +335,11 @@ static err_t telnet_accept(void *arg, struct tcp_pcb *pcb, err_t err)
     tcp_recv(pcb, telnet_recv);
 
     tcp_err(pcb, conn_err);
-    tcp_poll(pcb, telnet_poll, 4);
+    tcp_poll(pcb, telnet_poll, 1);
 
     usprintf(tstr,"\r\n        == eChronos launchpad TELNET ==\r\n"
                     "This is eChronos running lwIP v1.4.1 on a TI TM4C129\r\n"
-                    "Type 'help' to get a command list.\r\n\r\n%s",prompt);
+                    "UART1 Echo server, running at %i baud.\r\n\r\n", system_status.current_baud_rate);
 
     hs->data_out = tstr;
     hs->left = strlen(tstr);
@@ -373,14 +348,30 @@ static err_t telnet_accept(void *arg, struct tcp_pcb *pcb, err_t err)
     return ERR_OK;
 }
 
-/**
- * Initialize telnet by setting up a raw connection to
- * listen on port 23
- *
- */
-void telnet_init(void)
+void external_uart_init() {
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART6);
+    ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOP);
+
+    // Set GPIO P0 and P1 as UART pins.
+    GPIOPinConfigure(GPIO_PP0_U6RX);
+    GPIOPinConfigure(GPIO_PP1_U6TX);
+    ROM_GPIOPinTypeUART(GPIO_PORTP_BASE, GPIO_PIN_0 | GPIO_PIN_1);
+
+    // Configure the UART.
+    ROM_UARTConfigSetExpClk(UART6_BASE, g_ui32SysClock, system_status.current_baud_rate,
+                            (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
+                             UART_CONFIG_PAR_NONE));
+
+    // Enable the UART interrupt
+    ROM_IntEnable(INT_UART6);
+    ROM_UARTIntEnable(UART6_BASE, UART_INT_RX | UART_INT_RT);
+}
+
+void telnet_uart_echo_init(int port)
 {
-    UARTprintf("Initializing telnet server on port 23...\n");
+    external_uart_init();
+
+    UARTprintf("Initializing telnet UART echo server on port %i...\n", port);
 
     struct tcp_pcb *pcb;
 
@@ -388,7 +379,7 @@ void telnet_init(void)
 
     UARTprintf("New tcp PCB: %x\n", pcb);
 
-    char bind_error = tcp_bind(pcb, IP_ADDR_ANY, 23);
+    char bind_error = tcp_bind(pcb, IP_ADDR_ANY, port);
 
     UARTprintf("Binding PCB to port 23, returned %i\n", (int)bind_error);
 

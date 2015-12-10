@@ -47,12 +47,27 @@
 
 #include "rtos-kochab.h"
 
-#include "telnet.h"
+#include "telnet_command.h"
+#include "telnet_uart_echo.h"
 
-#define debug_println(text) UARTprintf(text);UARTprintf("\n")
+#include "system_status.h"
 
+// Relay ports & pins
+#define RELAY_1_PORT GPIO_PORTK_BASE
+#define RELAY_2_PORT GPIO_PORTK_BASE
+
+#define RELAY_1_PIN GPIO_PIN_6
+#define RELAY_2_PIN GPIO_PIN_7
+
+// Telnet configuration
+#define TELNET_COMMAND_PORT 3500
+#define TELNET_UART_ECHO_PORT 2000
+
+// Interrupt priorities
 #define SYSTICK_INT_PRIORITY    0x80
 #define ETHERNET_INT_PRIORITY   0xC0
+
+system_status_t system_status;
 
 #ifdef DEBUG
 void __error__( char *pcFilename, uint32_t ui32Line ) {
@@ -73,40 +88,36 @@ uint32_t g_ui32IPAddress;
 
 void relays_on() {
     // Note the relays are active-low!
-    ROM_GPIOPinWrite(GPIO_PORTK_BASE, GPIO_PIN_6, 0);
-    ROM_GPIOPinWrite(GPIO_PORTK_BASE, GPIO_PIN_7, 0);
+    ROM_GPIOPinWrite(RELAY_1_PORT, RELAY_1_PIN, 0);
+    ROM_GPIOPinWrite(RELAY_2_PORT, RELAY_2_PIN, 0);
+
+    system_status.power_on = 1;
 }
 
 
 void relays_off() {
-    ROM_GPIOPinWrite(GPIO_PORTK_BASE, GPIO_PIN_6, 0xFF);
-    ROM_GPIOPinWrite(GPIO_PORTK_BASE, GPIO_PIN_7, 0xFF);
+    ROM_GPIOPinWrite(RELAY_1_PORT, RELAY_1_PIN, 0xFF);
+    ROM_GPIOPinWrite(RELAY_2_PORT, RELAY_2_PIN, 0xFF);
+
+    system_status.power_on = 0;
 }
 
 
 void
 ConfigureUART(void)
 {
-    //
     // Enable the GPIO Peripheral used by the UART.
-    //
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOA);
 
-    //
     // Enable UART0
-    //
     ROM_SysCtlPeripheralEnable(SYSCTL_PERIPH_UART0);
 
-    //
     // Configure GPIO Pins for UART mode.
-    //
     ROM_GPIOPinConfigure(GPIO_PA0_U0RX);
     ROM_GPIOPinConfigure(GPIO_PA1_U0TX);
     ROM_GPIOPinTypeUART(GPIO_PORTA_BASE, GPIO_PIN_0 | GPIO_PIN_1);
 
-    //
     // Initialize the UART for console I/O.
-    //
     UARTStdioConfig(0, 115200, g_ui32SysClock);
 }
 
@@ -188,6 +199,10 @@ main(void)
     uint32_t ui32User0, ui32User1;
     uint8_t pui8MACArray[8];
 
+    //Initialize system status
+    system_status.power_on = 0;
+    system_status.current_baud_rate = 115200;
+
     //Needed by the PHY
     SysCtlMOSCConfigSet(SYSCTL_MOSC_HIGHFREQ);
 
@@ -243,8 +258,11 @@ main(void)
     // Initialize a sample httpd server.
     httpd_init();
 
-    // Initialize the telnet server
-    telnet_init();
+    // Initialize the telnet command server
+    telnet_command_init( TELNET_COMMAND_PORT );
+
+    // Initialize the telnet uart echo server
+    telnet_uart_echo_init( TELNET_UART_ECHO_PORT );
 
     // Set the interrupt priorities.  We set the SysTick interrupt to a higher
     // priority than the Ethernet interrupt to ensure that the file system
