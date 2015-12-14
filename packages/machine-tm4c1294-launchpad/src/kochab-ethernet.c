@@ -44,6 +44,7 @@
 #include "utils/lwiplib.h"
 #include "utils/uartstdio.h"
 #include "utils/ustdlib.h"
+#include "drivers/buttons.h"
 
 #include "rtos-kochab.h"
 
@@ -218,7 +219,8 @@ main(void)
 
     ConfigureUART();
 
-    UARTprintf( "Starting eChronos HTTP demo\n" );
+    UARTprintf( "Starting eChronos regression server\n" );
+
 
     // Configure the hardware MAC address for Ethernet Controller filtering of
     // incoming packets.  The MAC address will be stored in the non-volatile
@@ -278,6 +280,19 @@ main(void)
     
     // Turn them off initially
     relays_off();
+
+    // Unless we've booted with a button held down (local power override)
+    
+    ButtonsInit();
+
+    uint8_t ui8Buttons;
+
+    // Grab the current, raw state of the buttons.
+    ButtonsPoll(0, &ui8Buttons);
+
+    if( ui8Buttons & USR_SW1 ) {
+        relays_on();
+    }
 
     rtos_start();
 

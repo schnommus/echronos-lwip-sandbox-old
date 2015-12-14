@@ -4,6 +4,7 @@
 #include "lwip/debug.h"
 #include "lwip/stats.h"
 #include "lwip/tcp.h"
+#include "lwip/tcpip.h"
 
 #include "utils/uartstdio.h"
 #include "utils/ustdlib.h"
@@ -52,6 +53,8 @@ struct telnet_state {
 
 extern uint32_t g_ui32SysClock;
 
+static err_t telnet_poll(void *arg, struct tcp_pcb *pcb);
+
 char tstr[2000];
 
 static void conn_err(void *arg, err_t err)
@@ -95,6 +98,9 @@ static void send_data(struct tcp_pcb *pcb, struct telnet_state *hs)
         hs->data_out += len;
         hs->left -= len;
     }
+
+    // Make sure there's no data left
+    telnet_poll( hs, pcb ); 
 }
 
 #define UART_BUFFER_SIZE 4096
@@ -126,6 +132,7 @@ void buffer_uart_interrupt() {
     }
 }
 
+
 static err_t telnet_poll(void *arg, struct tcp_pcb *pcb)
 {
     struct telnet_state *hs;
@@ -136,7 +143,8 @@ static err_t telnet_poll(void *arg, struct tcp_pcb *pcb)
         tcp_abort(pcb);
         return ERR_ABRT;
     } else {
-
+        
+        // If we have any data; send it!
         if( uart_buffer_index != 0 ) {
             ROM_IntDisable(INT_UART6);
 
@@ -294,6 +302,9 @@ static err_t telnet_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t e
         close_conn(pcb, hs);
     }
 
+    // If there is an instantaneous response, send it straight away.
+    telnet_poll( arg, pcb ); 
+
     return ERR_OK;
 }
 
@@ -331,7 +342,7 @@ static err_t telnet_accept(void *arg, struct tcp_pcb *pcb, err_t err)
     tcp_arg(pcb, hs);
 
     /* Tell TCP that we wish to be informed of incoming data by a call
-    to the http_recv() function. */
+    to the telnet_recv() function. */
     tcp_recv(pcb, telnet_recv);
 
     tcp_err(pcb, conn_err);

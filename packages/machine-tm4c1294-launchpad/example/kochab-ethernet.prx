@@ -202,6 +202,7 @@
         <module name="machine-tm4c1294-launchpad.ti_libs.utils.lwiplib"/>
         <module name="machine-tm4c1294-launchpad.ti_libs.utils.locator"/>
         <module name="machine-tm4c1294-launchpad.ti_libs.examples.boards.ek-tm4c1294xl.drivers.pinout"/>
+        <module name="machine-tm4c1294-launchpad.ti_libs.examples.boards.ek-tm4c1294xl.drivers.buttons"/>
 
   </modules>
 </system>
