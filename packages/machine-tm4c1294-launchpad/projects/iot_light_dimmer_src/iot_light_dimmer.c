@@ -31,6 +31,7 @@
 #include "inc/hw_memmap.h"
 #include "inc/hw_types.h"
 #include "inc/hw_ints.h"
+#include "inc/hw_pwm.h"
 #include "driverlib/gpio.h"
 #include "drivers/pinout.h"
 #include "driverlib/pin_map.h"
@@ -87,12 +88,31 @@ uint32_t g_ui32SysClock;
 uint32_t g_ui32IPAddress;
 
 
+
+void relays_on() {
+    // Note the relays are active-low!
+    ROM_GPIOPinWrite(RELAY_1_PORT, RELAY_1_PIN, 0);
+    ROM_GPIOPinWrite(RELAY_2_PORT, RELAY_2_PIN, 0);
+
+    system_status.power_on = 1;
+}
+
+
+void relays_off() {
+    ROM_GPIOPinWrite(RELAY_1_PORT, RELAY_1_PIN, 0xFF);
+    ROM_GPIOPinWrite(RELAY_2_PORT, RELAY_2_PIN, 0xFF);
+
+    system_status.power_on = 0;
+}
+
+
 void pwm_init() {
+
+
     SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
 
     SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
 
-    // Set pwm clock to system clock / 4
     PWMClockSet(PWM0_BASE, PWM_SYSCLK_DIV_4);
 
     GPIOPinConfigure(GPIO_PF1_M0PWM1);
@@ -103,19 +123,20 @@ void pwm_init() {
                     PWM_GEN_MODE_NO_SYNC);
     
     PWMGenPeriodSet(PWM0_BASE, PWM_GEN_0, 64000);
+
+    PWMOutputState(PWM0_BASE, PWM_OUT_1_BIT, true);
+
+    PWMGenEnable(PWM0_BASE, PWM_GEN_0);
 }
 
 void apply_brightness() {
-    PWMGenDisable(PWM0_BASE, PWM_GEN_0);
+    uint32_t period = PWMGenPeriodGet(PWM0_BASE, PWM_GEN_0);
+    uint32_t newPeriod = (period * system_status.brightness) / 100;
 
-    PWMOutputState(PWM0_BASE, PWM_OUT_0_BIT, false);
+    if( newPeriod < 100 ) newPeriod = 100;
+    if( newPeriod > period - 100 ) newPeriod = period - 100;
 
-    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_0,
-                     (PWMGenPeriodGet(PWM0_BASE, PWM_OUT_0) * system_status.brightness) / 100);
-
-    PWMOutputState(PWM0_BASE, PWM_OUT_0_BIT, true);
-
-    PWMGenEnable(PWM0_BASE, PWM_GEN_0);
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_1, newPeriod );
 }
 
 void
@@ -153,11 +174,16 @@ void manual_brightness_adjust() {
         system_status.brightness += 5;
     }
 
+    if( system_status.brightness < 0 ) system_status.brightness = 0;
+    if( system_status.brightness > 100 ) system_status.brightness = 100;
+
+    apply_brightness();
 }
 
 bool tick_irq(void) {
     rtos_timer_tick();
-    manual_brightness_adjust();
+    // Buggy, omitted for now
+    //manual_brightness_adjust();
     return true;
 }
 
@@ -244,10 +270,8 @@ main(void)
                 SYSCTL_OSC_MAIN | SYSCTL_USE_PLL |
                 SYSCTL_CFG_VCO_480), 120000000);
 
-
     pwm_init();
     apply_brightness();
-
 
     ButtonsInit();
 
@@ -259,6 +283,12 @@ main(void)
 
     ConfigureUART();
 
+    // Configure the relay control pins as outputs
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTK_BASE, GPIO_PIN_6);
+    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTK_BASE, GPIO_PIN_7);
+    
+    // Turn them off initially
+    relays_off();
 
     UARTprintf( "Starting eChronos light dimmer\n" );
 

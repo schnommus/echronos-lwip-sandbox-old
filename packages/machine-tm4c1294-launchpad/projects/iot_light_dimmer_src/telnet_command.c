@@ -60,6 +60,8 @@ void cmd_parser(struct telnet_state *hs)
             " 'quit' - Exit the telnet session\r\n"
             " 'help' - Show this message\r\n"
             " 'status' - Show the current state of this device\r\n"
+            " 'red' - Switch to red light\r\n"
+            " 'green' - Switch to green light\r\n"
             " 'set xxx' - Set LED brightness to xxx percent (integer 0-100)\r\n"
             "%s",prompt);
 
@@ -70,14 +72,37 @@ void cmd_parser(struct telnet_state *hs)
     {
         usprintf(tstr,"\r\n"
             "== STATUS ==\r\n"
+            " Light on - %s\r\n"
             " Current brightness - %i\r\n"
             "%s",
+            system_status.power_on ? "green" : "red",
             system_status.brightness,
             prompt );
 
         hs->data_out = tstr;
         hs->left = strlen(hs->data_out);
     }
+    else if( strstr(p, "green") )
+    {
+        relays_on();
+        usprintf(tstr,"\r\n"
+            "Switched to green light\r\n"
+            "%s",prompt);
+
+        hs->data_out = tstr;
+        hs->left = strlen(hs->data_out);
+    }
+    else if( strstr(p, "red") )
+    {
+        relays_off();
+        usprintf(tstr,"\r\n"
+            "Switched to red light\r\n"
+            "%s",prompt);
+
+        hs->data_out = tstr;
+        hs->left = strlen(hs->data_out);
+    }
+ 
     else if( strstr(p, "set") )
     {
         // Don't have sscanf
@@ -167,7 +192,6 @@ static err_t telnet_poll(void *arg, struct tcp_pcb *pcb)
         return ERR_ABRT;
     } else {
 
-        apply_brightness();
 
         if (hs->flags & TELNET_FLAG_CLOSE_CONNECTION) {
             UARTprintf("closing connection in poll\n");
