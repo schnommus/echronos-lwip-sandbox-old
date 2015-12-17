@@ -41,20 +41,7 @@ struct telnet_state {
 char tstr[2000];
 char *prompt = "\r\neChronos Launchpad >> ";
 
-extern void relays_on();
-extern void relays_off();
-extern void external_uart_init();
-
-int allowed_baud_rates[] = {
-        1200,
-        2400,
-        4800,
-        9600,
-       19200,
-       38400,
-       57600,
-      115200,
-};
+extern void apply_brightness();
 
 // telnet command handler
 void cmd_parser(struct telnet_state *hs)
@@ -72,10 +59,8 @@ void cmd_parser(struct telnet_state *hs)
             "== COMMAND LIST ==\r\n"
             " 'quit' - Exit the telnet session\r\n"
             " 'help' - Show this message\r\n"
-            " 'poweron' - Switch ON the +5v, +12v rails\r\n"
-            " 'poweroff' - Switch OFF the +5v, +12v rails\r\n"
             " 'status' - Show the current state of this device\r\n"
-            " 'baud 115200' - Set UART baud rate to 115200 (or another valid baud rate)\r\n"
+            " 'set xxx' - Set LED brightness to xxx percent (integer 0-100)\r\n"
             "%s",prompt);
 
         hs->data_out = tstr;
@@ -85,62 +70,31 @@ void cmd_parser(struct telnet_state *hs)
     {
         usprintf(tstr,"\r\n"
             "== STATUS ==\r\n"
-            " +5V, +12V rails - %s\r\n"
-            " UART baud rate - %i\r\n"
+            " Current brightness - %i\r\n"
             "%s",
-            system_status.power_on ? "ONLINE" : "OFFLINE",
-            system_status.current_baud_rate,
+            system_status.brightness,
             prompt );
 
         hs->data_out = tstr;
         hs->left = strlen(hs->data_out);
     }
-    else if( strstr(p, "poweron") )
-    {
-        relays_on();
-        usprintf(tstr,"\r\n"
-            "+5v, +12v rails have been switched ON\r\n"
-            "%s",prompt);
-
-        hs->data_out = tstr;
-        hs->left = strlen(hs->data_out);
-    }
-    else if( strstr(p, "poweroff") )
-    {
-        relays_off();
-        usprintf(tstr,"\r\n"
-            "+5v, +12v rails have been switched OFF\r\n"
-            "%s",prompt);
-
-        hs->data_out = tstr;
-        hs->left = strlen(hs->data_out);
-    }
-    else if( strstr(p, "baud") )
+    else if( strstr(p, "set") )
     {
         // Don't have sscanf
-        char *baud_string_start = p + strlen("baud") + 1;
+        char *set_string_start = p + strlen("set") + 1;
         const char *next;
-        int new_baud = ustrtoul( baud_string_start, &next, 0 );
+        int new_set = ustrtoul( set_string_start, &next, 0 );
 
-        bool found_baud = false;
-        for( int i = 0; i != sizeof( allowed_baud_rates ) / sizeof( allowed_baud_rates[0] ); ++i ) {
-            if( new_baud == allowed_baud_rates[i] ) {
-                found_baud = true;
-                break;
-            }
-        }
-
-        if( !found_baud ) {
+        if( new_set < 0 || new_set > 100 ) {
             usprintf(tstr,"\r\n"
-                "%i is an invalid baud rate. Valid baud rates are:\r\n"
-                "1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200\r\n"
-                "%s", new_baud, prompt);
+                "%i is an invalid brightness. Valid brightnesses are [0-100]:\r\n"
+                "%s", new_set, prompt);
         } else {
-            system_status.current_baud_rate = new_baud;
-            external_uart_init();
+            system_status.brightness = new_set;
+            apply_brightness();
             usprintf(tstr,"\r\n"
-                "New baud rate set: %i\r\n"
-                "%s", system_status.current_baud_rate, prompt);
+                "New brightness set: %i\r\n"
+                "%s", system_status.brightness, prompt);
         }
 
         hs->data_out = tstr;
@@ -212,6 +166,8 @@ static err_t telnet_poll(void *arg, struct tcp_pcb *pcb)
         tcp_abort(pcb);
         return ERR_ABRT;
     } else {
+
+        apply_brightness();
 
         if (hs->flags & TELNET_FLAG_CLOSE_CONNECTION) {
             UARTprintf("closing connection in poll\n");
@@ -430,8 +386,8 @@ static err_t telnet_accept(void *arg, struct tcp_pcb *pcb, err_t err)
     tcp_err(pcb, conn_err);
     tcp_poll(pcb, telnet_poll, 4);
 
-    usprintf(tstr,"\r\n        == eChronos launchpad TELNET ==\r\n"
-                    "This is eChronos running lwIP v1.4.1 on a TI TM4C129\r\n"
+    usprintf(tstr,"\r\n        == eChronos Light Dimmer TELNET ==\r\n"
+                    "This is a fantastically bright light dimmer, running on lwIP v1.4.1\r\n"
                     "Type 'help' to get a command list.\r\n\r\n%s",prompt);
 
     hs->data_out = tstr;

@@ -40,6 +40,7 @@
 #include "driverlib/uart.h"
 #include "driverlib/interrupt.h"
 #include "driverlib/emac.h"
+#include "driverlib/pwm.h"
 #include "utils/locator.h"
 #include "utils/lwiplib.h"
 #include "utils/uartstdio.h"
@@ -49,7 +50,6 @@
 #include "rtos-kochab.h"
 
 #include "telnet_command.h"
-#include "telnet_uart_echo.h"
 
 #include "system_status.h"
 
@@ -87,22 +87,36 @@ uint32_t g_ui32SysClock;
 uint32_t g_ui32IPAddress;
 
 
-void relays_on() {
-    // Note the relays are active-low!
-    ROM_GPIOPinWrite(RELAY_1_PORT, RELAY_1_PIN, 0);
-    ROM_GPIOPinWrite(RELAY_2_PORT, RELAY_2_PIN, 0);
+void pwm_init() {
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_PWM0);
 
-    system_status.power_on = 1;
+    SysCtlPeripheralEnable(SYSCTL_PERIPH_GPIOF);
+
+    // Set pwm clock to system clock / 4
+    PWMClockSet(PWM0_BASE, PWM_SYSCLK_DIV_4);
+
+    GPIOPinConfigure(GPIO_PF1_M0PWM1);
+
+    GPIOPinTypePWM(GPIO_PORTF_BASE, GPIO_PIN_1);
+
+    PWMGenConfigure(PWM0_BASE, PWM_GEN_0, PWM_GEN_MODE_UP_DOWN |
+                    PWM_GEN_MODE_NO_SYNC);
+    
+    PWMGenPeriodSet(PWM0_BASE, PWM_GEN_0, 64000);
 }
 
+void apply_brightness() {
+    PWMGenDisable(PWM0_BASE, PWM_GEN_0);
 
-void relays_off() {
-    ROM_GPIOPinWrite(RELAY_1_PORT, RELAY_1_PIN, 0xFF);
-    ROM_GPIOPinWrite(RELAY_2_PORT, RELAY_2_PIN, 0xFF);
+    PWMOutputState(PWM0_BASE, PWM_OUT_0_BIT, false);
 
-    system_status.power_on = 0;
+    PWMPulseWidthSet(PWM0_BASE, PWM_OUT_0,
+                     (PWMGenPeriodGet(PWM0_BASE, PWM_OUT_0) * system_status.brightness) / 100);
+
+    PWMOutputState(PWM0_BASE, PWM_OUT_0_BIT, true);
+
+    PWMGenEnable(PWM0_BASE, PWM_GEN_0);
 }
-
 
 void
 ConfigureUART(void)
@@ -122,8 +136,28 @@ ConfigureUART(void)
     UARTStdioConfig(0, 115200, g_ui32SysClock);
 }
 
+// TODO: Put this in a task that waits for a systick signal
+// instead of doing it directly.
+void manual_brightness_adjust() {
+
+    uint8_t ui8Buttons;
+
+    // Grab the current, raw state of the buttons.
+    ButtonsPoll(0, &ui8Buttons);
+
+    if( ui8Buttons & USR_SW1 ) {
+        system_status.brightness -= 5;
+    }
+
+    if( ui8Buttons & USR_SW2 ) {
+        system_status.brightness += 5;
+    }
+
+}
+
 bool tick_irq(void) {
     rtos_timer_tick();
+    manual_brightness_adjust();
     return true;
 }
 
@@ -201,8 +235,7 @@ main(void)
     uint8_t pui8MACArray[8];
 
     //Initialize system status
-    system_status.power_on = 0;
-    system_status.current_baud_rate = 115200;
+    system_status.brightness = 50;
 
     //Needed by the PHY
     SysCtlMOSCConfigSet(SYSCTL_MOSC_HIGHFREQ);
@@ -210,6 +243,13 @@ main(void)
     g_ui32SysClock = MAP_SysCtlClockFreqSet((SYSCTL_XTAL_25MHZ |
                 SYSCTL_OSC_MAIN | SYSCTL_USE_PLL |
                 SYSCTL_CFG_VCO_480), 120000000);
+
+
+    pwm_init();
+    apply_brightness();
+
+
+    ButtonsInit();
 
     PinoutSet(true, false);
 
@@ -219,7 +259,8 @@ main(void)
 
     ConfigureUART();
 
-    UARTprintf( "Starting eChronos regression server\n" );
+
+    UARTprintf( "Starting eChronos light dimmer\n" );
 
 
     // Configure the hardware MAC address for Ethernet Controller filtering of
@@ -263,9 +304,6 @@ main(void)
     // Initialize the telnet command server
     telnet_command_init( TELNET_COMMAND_PORT );
 
-    // Initialize the telnet uart echo server
-    telnet_uart_echo_init( TELNET_UART_ECHO_PORT );
-
     // Set the interrupt priorities.  We set the SysTick interrupt to a higher
     // priority than the Ethernet interrupt to ensure that the file system
     // tick is processed if SysTick occurs while the Ethernet handler is being
@@ -274,25 +312,6 @@ main(void)
     MAP_IntPrioritySet(INT_EMAC0, ETHERNET_INT_PRIORITY);
     MAP_IntPrioritySet(FAULT_SYSTICK, SYSTICK_INT_PRIORITY);
 
-    // Configure the relay control pins as outputs
-    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTK_BASE, GPIO_PIN_6);
-    ROM_GPIOPinTypeGPIOOutput(GPIO_PORTK_BASE, GPIO_PIN_7);
-    
-    // Turn them off initially
-    relays_off();
-
-    // Unless we've booted with a button held down (local power override)
-    
-    ButtonsInit();
-
-    uint8_t ui8Buttons;
-
-    // Grab the current, raw state of the buttons.
-    ButtonsPoll(0, &ui8Buttons);
-
-    if( ui8Buttons & USR_SW1 ) {
-        relays_on();
-    }
 
     rtos_start();
 
