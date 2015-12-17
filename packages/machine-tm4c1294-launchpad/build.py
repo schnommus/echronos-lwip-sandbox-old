@@ -48,7 +48,7 @@ def system_build(system):
     system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/ports/tiva-tm4c129/include")
     system.add_include_path(ti_lib_dir + "third_party/lwip-1.4.1/src/include/ipv4")
     system.add_include_path(ti_lib_dir + "third_party")
-    system.add_include_path(ti_lib_dir + "../src")
+    system.add_include_path(ti_lib_dir + "../projects/util")
 
     cpu_fpu = [ '-mfpu=fpv4-sp-d16', '-mfloat-abi=softfp']
 
